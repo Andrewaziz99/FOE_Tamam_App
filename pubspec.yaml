@@ -105,7 +105,10 @@ flutter:
     - assets/images/
     - assets/db/
     - assets/db/app_database.db
+    - assets/db/Soldiers.db
     - assets/templates/
+    - assets/lib/
+    - assets/lib/sqlite3.dll
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

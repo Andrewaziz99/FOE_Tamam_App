@@ -1,8 +1,9 @@
-
 import 'dart:io';
 
 import 'package:bcrypt/bcrypt.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../modules/login/login_screen.dart';
 import '../network/local/cache_helper.dart';
@@ -16,22 +17,18 @@ void signOut(context) {
   });
 
   CacheHelper.removeAllData();
-
 }
 
 void logOut(context) {
   CacheHelper.removeAllData();
 
   navigateAndFinish(context, LoginScreen());
-
 }
-
 
 void printFullText(String text) {
   final pattern = RegExp('.{1,800}'); // 800 is the size of each chunk
   pattern.allMatches(text).forEach((match) => print(match.group(0)));
 }
-
 
 const String appTitle = "تنظيم وأفراد مكتب السيد/ مدير الجهاز";
 const String username = "اسم المستخدم";
@@ -55,9 +52,10 @@ const String usernameCheckError = "اسم المستخدم غير موجود";
 const String passwordCheckError = "كلمة المرور غير صحيحة";
 
 const String newUserBtn = 'إدخال وثيقة تعارف جديدة';
-const String showUserBtn = 'إظهار كل وثائق التعارف';
+const String showUserBtn = 'إدخال وإظهار وثائق التعارف';
 const String vacationBtn = 'تسجيل الاجازات';
 const String vacation_datesBtn = 'تاريخ الاجازات';
+const String movesBtn = 'التحركات';
 const String enter_editBtn = 'إدخال / تعديل البيانات';
 const String printBtn1 = 'طباعة تمام اليوم';
 const String printBtn2 = 'طباعة تحركات اليوم';
@@ -70,7 +68,7 @@ const String add_phone = 'رقم الهاتف الاضافي';
 const String homeAddress = 'عنوان المنزل';
 const String homePhone = 'رقم الهاتف الارضي';
 const String bDate = 'تاريخ الميلاد';
-const String city = 'المدينة';
+const String city = 'المحافظة';
 const String nationalId = 'الرقم القومي';
 const String soldierlId = 'الرقم العسكري';
 const String job = 'الوظيفة داخل المكتب';
@@ -86,8 +84,6 @@ const String motherPhone = 'رقم هاتف الام';
 const String grade = 'التقدير';
 const String numOfSiblings = 'عدد الاخوة';
 const String function = 'الوظيفة';
-
-
 
 const String rankError = 'الرجاء إدخال الرتبة';
 const String nameError = 'الرجاء إدخال الاسم';
@@ -112,9 +108,8 @@ const String motherPhoneError = 'الرجاء إدخال رقم هاتف الا�
 const String gradeError = 'الرجاء إدخال التقدير';
 const String numOfSiblingsError = 'الرجاء إدخال عدد الاخوة';
 
-
 const String imagePickSuccess = 'تم اختيار الصورة بنجاح';
-const String imagePickError = 'الرجاء اختيار صورة';
+const String imagePickError = 'حدث خطأ في اختيار صورة';
 
 const String soldierAddSuccess = 'تم إضافة البيانات بنجاح';
 const String soldierEditSuccess = 'تم تعديل البيانات بنجاح';
@@ -140,11 +135,80 @@ const String vacationAddSuccess = 'تم تسجيل الاجازة بنجاح';
 const String feedback = 'ملاحظات';
 const String office = 'مكتب السيد/ مدير الجهاز';
 const String DOC_TYP = 'تحركات';
+const String DOC_EXT = 'امتداد';
 const String DOC_VAC = 'اجازات';
 const String DOC_TAMAM = 'تمام';
 
 const String tamamSuccess = 'تم طباعة التمام بنجاح';
 const String tamamError = 'حدث خطأ أثناء طباعة التمام';
+
+const String missions = 'المهام اليومية للجنود';
+const String printMissions = 'طباعة المهام اليومية للجنود';
+const String printMissionSuccess = 'تم طباعة المهام اليومية للجنود بنجاح';
+const String printMissionError = 'خطأ في طباعة المهام اليومية للجنود';
+
+const String frontReception = 'الاستقبال الرئيسي ١';
+const String backReception = 'الاستقبال الخلفي ٢';
+const String sideReception = 'الاستقبال الجانبي ٣';
+const String chef = 'المطبخ';
+const String barista = 'البوفيه';
+const String coffee_corner = 'الكوفي كورنر';
+const String police = 'الشرطة العسكرية';
+const String archive = 'مكتب الأرشيف والسكرتارية';
+const String officeManager = 'مكتب السيد/ مدير الجهاز';
+const String management = 'أعمال إدارية';
+const String meeting_hole = 'قاعة المؤتمرات';
+const String elevator = 'الأسانسير';
+const String gym = 'الجيم';
+const String adminstration = 'شئون إدارية المكتب';
+
+const String currentFunction = 'الوظيفة الحالية:';
+const String soldier = 'جندى';
+
+const String setFunctionSucess = 'تم تعيين الوظيفة بنجاح';
+const String setFunctionError = 'حدث خطأ أثناء تعيين الوظيفة';
+
+const String genTableSuccessMsg = 'تم طباعة التحركات وتصريح الإجازات بنجاح';
+
+
+const String extendBtn = 'مد';
+
+const String vacationStopped = 'تم إيقاف الاجازة';
+
+const String vacationExtended = 'تم مد الاجازة';
+
+const String printExtend = 'طباعة الامتداد';
+const String printExtendSuccess = 'تم طباعة الامتداد بنجاح';
+const String printExtendError = 'حدث خطأ أثناء طباعة الامتداد';
+
+const String vacation = 'اجازة';
+const String allVacations = 'الكل';
+const String extendedVacations = 'الممتد';
+const String activeVacations = 'النشط';
+const String noData = 'لا توجد بيانات';
+
+const String updateListSuccessMsg = 'تم التعديل بنجاح';
+const String editVacationSuccess = 'تم تعديل الاجازة بنجاح';
+
+const String save = 'حفظ';
+const String makeVacationSuccessMsg = 'تم تسجيل الاجازة بنجاح';
+
+const List<String> functions = [
+  frontReception,
+  backReception,
+  sideReception,
+  chef,
+  barista,
+  police,
+  archive,
+  officeManager,
+  management,
+  meeting_hole,
+  elevator,
+  gym,
+  coffee_corner,
+  adminstration,
+];
 
 const List<String> ranks = [
   'جندى',
@@ -154,8 +218,6 @@ const List<String> ranks = [
   'مساعد',
   'مساعد أول',
 ];
-
-
 
 Map<String, String> arabicDigits = {
   '0': '٠',
@@ -178,7 +240,6 @@ Map<String, String> weekDays = {
   'wednesday': 'الأربعاء',
   'thursday': 'الخمبس',
   'friday': 'الجمعة',
-
 };
 
 String getWeekDay(String day) {
@@ -208,10 +269,10 @@ String convertArabicToEnglish(String text) {
 
   // Convert Arabic digits to English
   return text.split('').map((char) {
-    return arabicDigits[char] ?? char; // Replace with English digit or keep original
+    return arabicDigits[char] ??
+        char; // Replace with English digit or keep original
   }).join();
 }
-
 
 class ArabicNumbersInputFormatter extends TextInputFormatter {
   // Map to convert English digits (0-9) to Arabic-Indic digits (٠-٩)
@@ -233,7 +294,8 @@ class ArabicNumbersInputFormatter extends TextInputFormatter {
       TextEditingValue oldValue, TextEditingValue newValue) {
     // Replace digits with their Arabic-Indic equivalents
     String newText = newValue.text.split('').map((char) {
-      return arabicDigits[char] ?? char; // Use Arabic digit or the same character if it's not a digit
+      return arabicDigits[char] ??
+          char; // Use Arabic digit or the same character if it's not a digit
     }).join();
 
     return newValue.copyWith(
@@ -243,13 +305,215 @@ class ArabicNumbersInputFormatter extends TextInputFormatter {
   }
 }
 
+final Map<String, String> _bracketsMap = {
+  '(': ')', // Regular parentheses
+  ')': '(',
+  '[': ']', // Square brackets
+  ']': '[',
+  '{': '}', // Curly braces
+  '}': '{',
+  '<': '>', // Angle brackets
+  '>': '<',
+};
+
+/// Converts brackets in text to Arabic format
+String convertAllToArabic(String text) {
+  if (text.isEmpty) return text;
+
+  StringBuffer result = StringBuffer();
+  for (int i = 0; i < text.length; i++) {
+    String char = text[i];
+    result.write(_bracketsMap[char] ?? char);
+  }
+  return result.toString();
+}
+
+class ArabicBracketsConverter {
+  static final Map<String, String> _bracketsMap = {
+    '(': ')', // Regular parentheses
+    ')': '(',
+    '[': ']', // Square brackets
+    ']': '[',
+    '{': '}', // Curly braces
+    '}': '{',
+    '<': '>', // Angle brackets
+    '>': '<',
+  };
+
+  /// Converts brackets in text to Arabic format
+  static String convertAllToArabic(String text) {
+    if (text.isEmpty) return text;
+
+    StringBuffer result = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      String char = text[i];
+      result.write(_bracketsMap[char] ?? char);
+    }
+    return result.toString();
+  }
+
+  /// Converts specific types of brackets only
+  static String convertSpecificBrackets(
+    String text, {
+    bool convertParentheses = true,
+    bool convertSquare = true,
+    bool convertCurly = true,
+    bool convertAngle = true,
+  }) {
+    if (text.isEmpty) return text;
+
+    Map<String, String> activeMap = {};
+
+    if (convertParentheses) {
+      activeMap.addAll({'(': ')', ')': '('});
+    }
+    if (convertSquare) {
+      activeMap.addAll({'[': ']', ']': '['});
+    }
+    if (convertCurly) {
+      activeMap.addAll({'{': '}', '}': '{'});
+    }
+    if (convertAngle) {
+      activeMap.addAll({'<': '>', '>': '<'});
+    }
+
+    StringBuffer result = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      String char = text[i];
+      result.write(activeMap[char] ?? char);
+    }
+    return result.toString();
+  }
+}
 
 final salt = BCrypt.gensalt();
 
-String getDatabasePath() {
-  final dbFolder = Directory('${Directory.current.path}/db');
-  if (!dbFolder.existsSync()) {
-    dbFolder.createSync();
+Future<String> initializeDatabase() async {
+  // Get the application document directory
+  final appDir = await getApplicationDocumentsDirectory();
+  final dbPath = '${appDir.path}/Tamam/db/Soldiers.db';
+
+  // Check if the database already exists
+  final dbFile = File(dbPath);
+  if (!await dbFile.exists()) {
+    // Load the database from assets
+    final byteData = await rootBundle.load('assets/db/Soldiers.db');
+    final buffer = byteData.buffer;
+
+    // Write the database to the app document directory
+    await dbFile.writeAsBytes(
+      buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes),
+    );
+    print('Database copied to: $dbPath');
+  } else {
+    print('Database already exists at: $dbPath');
   }
-  return '${dbFolder.path}/Soldiers.db';
+
+  return dbPath; // Return the database path
+}
+
+Future<void> pickAppDatabaseFile() async {
+  try {
+    // Use FilePicker to pick the file
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['db'], // Only allow files with the .db extension
+    );
+
+    if (result != null) {
+      // Get the file path
+      String? filePath = result.files.single.path;
+
+      if (filePath != null) {
+        print("Selected database file: $filePath");
+
+        // Save the database file to CacheHelper
+        await CacheHelper.saveData(key: 'app_db_path', value: filePath);
+      }
+    } else {
+      // User canceled the picker
+      print("File selection canceled.");
+    }
+  } catch (e) {
+    print("Error picking file: $e");
+  }
+}
+
+Future<void> pickSoldiersDatabaseFile() async {
+  try {
+    // Use FilePicker to pick the file
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['db'], // Only allow files with the .db extension
+    );
+
+    if (result != null) {
+      // Get the file path
+      String? filePath = result.files.single.path;
+
+      if (filePath != null) {
+        print("Selected database file: $filePath");
+
+        // Save the database file to CacheHelper
+        await CacheHelper.saveData(key: 'soldiers_db_path', value: filePath);
+      }
+    } else {
+      // User canceled the picker
+      print("File selection canceled.");
+    }
+  } catch (e) {
+    print("Error picking file: $e");
+  }
+}
+
+Future<String> getAppDatabaseFile() async {
+  final appDbPath = await CacheHelper.getData(key: 'app_db_path');
+  return appDbPath;
+}
+
+Future<String> getSoldiersDatabaseFile() async {
+  final soldiersDbPath = await CacheHelper.getData(key: 'soldiers_db_path');
+  return soldiersDbPath;
+}
+
+Future<void> pickImagesFolder() async {
+  try {
+    // Allow the user to pick a folder
+    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+
+    if (selectedDirectory != null) {
+      print("Selected folder: $selectedDirectory");
+      CacheHelper.saveData(key: 'images_folder', value: selectedDirectory);
+    } else {
+      print("Folder selection canceled.");
+    }
+  } catch (e) {
+    print("An error occurred while picking images: $e");
+  }
+}
+
+Future<String> getImagesFolder() async {
+  final imagesFolder = await CacheHelper.getData(key: 'images_folder');
+  return imagesFolder;
+}
+
+Future<void> pickTemplatesFolder() async {
+  try {
+    // Allow the user to pick a folder
+    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+
+    if (selectedDirectory != null) {
+      print("Selected folder: $selectedDirectory");
+      CacheHelper.saveData(key: 'templates_folder', value: selectedDirectory);
+    } else {
+      print("Folder selection canceled.");
+    }
+  } catch (e) {
+    print("An error occurred while picking images: $e");
+  }
+}
+
+Future<String> getTemplatesFolder() async {
+  final imagesFolder = await CacheHelper.getData(key: 'templates_folder');
+  return imagesFolder;
 }

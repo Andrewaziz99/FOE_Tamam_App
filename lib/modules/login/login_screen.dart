@@ -55,6 +55,14 @@ class LoginScreen extends StatelessWidget {
             title: const Text(appTitle,
                 style: TextStyle(fontSize: 25.0, color: Colors.white)),
             centerTitle: true,
+            actions: [
+              IconButton(
+                onPressed: () {
+                  pickAppDatabaseFile();
+                },
+                icon: const Icon(Icons.file_open_rounded),
+              ),
+            ],
           ),
           backgroundColor: Colors.transparent,
           body: Stack(

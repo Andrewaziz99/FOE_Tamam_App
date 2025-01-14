@@ -21,17 +21,7 @@ void main() async {
     return DynamicLibrary.open('lib/sqlite3.dll');
     });
   Bloc.observer = MyBlocObserver();
-  // DioHelper.init();
   await CacheHelper.init();
-
-  // Widget widget;
-  // uId = CacheHelper.getData(key: 'uId') ?? '';
-
-  // if (uId != '') {
-  //   widget = homeLayout();
-  // }else{
-  //   widget = LoginScreen();
-  // }
 
   runApp(const MyApp());
 }
@@ -41,24 +31,6 @@ class MyApp extends StatelessWidget {
   // final Widget startWidget;
 
   const MyApp({super.key});
-
-  // @override
-  // Widget build(BuildContext context) {
-  //   return MultiBlocProvider(
-  //     providers: [
-  //       BlocProvider(create: (BuildContext context) => QuestionCubit()..getQuestions()),
-  //       BlocProvider(create: (BuildContext context) => AppCubit()),
-  //       BlocProvider(create: (BuildContext context) => LoginCubit()),
-  //       BlocProvider(create: (BuildContext context) => RegisterCubit()),
-  //       BlocProvider(create: (BuildContext context) => HomeCubit()..getUserYear()),
-  //     ],
-  //     child: MaterialApp(
-  //       debugShowCheckedModeBanner: false,
-  //       theme: lightTheme,
-  //       home: startWidget,
-  //     ),
-  //   );
-  // }
 
 @override
 Widget build(BuildContext context) {

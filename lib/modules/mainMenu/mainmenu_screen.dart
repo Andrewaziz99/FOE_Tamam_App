@@ -3,7 +3,9 @@ import 'package:cherry_toast/resources/arrays.dart';
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:tamam/modules/Missions/missions_screen.dart';
 import 'package:tamam/modules/Soldiers/new_soldier_screen.dart';
+import 'package:tamam/modules/Vacation/moves_screen.dart';
 import 'package:tamam/shared/cubit/cubit.dart';
 import 'package:tamam/shared/cubit/states.dart';
 import 'package:tamam/shared/network/local/cache_helper.dart';
@@ -22,11 +24,12 @@ class MainMenuScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (BuildContext context) => AppCubit()..getSoldiers(),
+      create: (BuildContext context) => AppCubit()..getAllSoldiers()..getVacations(),
       child: BlocConsumer<AppCubit, AppStates>(
         listener: (BuildContext context, state) {
+          var cubit = AppCubit.get(context);
           if (state is pickImageSuccess) {
-            print('Pick Image Success');
+            imageController.text = cubit.savedImagePath;
             CherryToast.success(
               textDirection: TextDirection.rtl,
               animationType: AnimationType.fromTop,
@@ -57,6 +60,7 @@ class MainMenuScreen extends StatelessWidget {
           }
 
           if (state is enterNewSoldierSuccess) {
+            imageController.clear();
             nameController.clear();
             rankController.clear();
             phoneController.clear();
@@ -121,7 +125,7 @@ class MainMenuScreen extends StatelessWidget {
               displayCloseButton: true,
               autoDismiss: true,
               toastPosition: Position.top,
-              title: const Text(tamamError),
+              title: Text(cubit.error),
             ).show(context);
           }
 
@@ -138,6 +142,28 @@ class MainMenuScreen extends StatelessWidget {
               centerTitle: true,
               actions: [
                 IconButton(
+                  tooltip: 'Set DB Path',
+                  onPressed: () {
+                    pickSoldiersDatabaseFile();
+                  },
+                  icon: const Icon(Icons.file_open_rounded),
+                ),
+                IconButton(
+                  tooltip: 'Set Templates Path',
+                  onPressed: () {
+                    pickTemplatesFolder();
+                  },
+                  icon: const Icon(Icons.document_scanner_rounded),
+                ),
+                IconButton(
+                  tooltip: 'Set Images Path',
+                  onPressed: () {
+                    pickImagesFolder();
+                  },
+                  icon: const Icon(Icons.folder_open_rounded),
+                ),
+                IconButton(
+                  tooltip: logout,
                   icon: const Icon(Icons.logout, color: Colors.red),
                   onPressed: () {
                     logOut(context);
@@ -165,57 +191,57 @@ class MainMenuScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            // defaultButton(
+                            //   fSize: 20.0,
+                            //   radius: 20.0,
+                            //   width: 250.0,
+                            //   text: newUserBtn,
+                            //   function: () {
+                            //     showModalBottomSheet(
+                            //         context: context,
+                            //         builder: (context) {
+                            //           return Container(
+                            //             width: double.infinity,
+                            //             decoration: const BoxDecoration(
+                            //               color: Colors.white,
+                            //               borderRadius: BorderRadius.only(
+                            //                 topLeft: Radius.circular(20.0),
+                            //                 topRight: Radius.circular(20.0),
+                            //               ),
+                            //             ),
+                            //             // color: Colors.white,
+                            //             child: Padding(
+                            //               padding: const EdgeInsets.all(20.0),
+                            //               child: SingleChildScrollView(
+                            //                 child: Column(
+                            //                   crossAxisAlignment:
+                            //                       CrossAxisAlignment.end,
+                            //                   children: [
+                            //                     const SizedBox(height: 20),
+                            //                     ConditionalBuilder(
+                            //                       condition: state
+                            //                           is! enterNewSoldierLoading,
+                            //                       builder:
+                            //                           (BuildContext context) =>
+                            //                               addSoldier(cubit,
+                            //                                   context, add),
+                            //                       fallback: (BuildContext
+                            //                               context) =>
+                            //                           const Center(
+                            //                               child:
+                            //                                   CircularProgressIndicator()),
+                            //                     ),
+                            //                   ],
+                            //                 ),
+                            //               ),
+                            //             ),
+                            //           );
+                            //         });
+                            //   },
+                            // ),
+                            // const SizedBox(width: 30),
                             defaultButton(
-                              fSize: 20.0,
-                              radius: 20.0,
-                              width: 250.0,
-                              text: newUserBtn,
-                              function: () {
-                                showModalBottomSheet(
-                                    context: context,
-                                    builder: (context) {
-                                      return Container(
-                                        width: double.infinity,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(20.0),
-                                            topRight: Radius.circular(20.0),
-                                          ),
-                                        ),
-                                        // color: Colors.white,
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(20.0),
-                                          child: SingleChildScrollView(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.end,
-                                              children: [
-                                                const SizedBox(height: 20),
-                                                ConditionalBuilder(
-                                                  condition: state
-                                                      is! enterNewSoldierLoading,
-                                                  builder:
-                                                      (BuildContext context) =>
-                                                          addSoldier(cubit,
-                                                              context, add),
-                                                  fallback: (BuildContext
-                                                          context) =>
-                                                      const Center(
-                                                          child:
-                                                              CircularProgressIndicator()),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    });
-                              },
-                            ),
-                            const SizedBox(width: 30),
-                            defaultButton(
-                              fSize: 20.0,
+                              fSize: 18.0,
                               radius: 20.0,
                               width: 250.0,
                               text: showUserBtn,
@@ -240,20 +266,43 @@ class MainMenuScreen extends StatelessWidget {
                               width: 250.0,
                               text: printBtn1,
                               function: () async {
-                                final ALL =
                                 await CacheHelper.getData(key: 'ALL');
-                                final VAC =
                                 await CacheHelper.getData(key: 'VAC');
-
-                                print(ALL);
-                                print(VAC);
 
                                 cubit.createTamamDoc();
                               },
                             ),
+                            // const SizedBox(width: 30),
                           ],
                         ),
                         const SizedBox(height: 50),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            defaultButton(
+                              fSize: 20.0,
+                              radius: 20.0,
+                              width: 250.0,
+                              text: missions,
+                              function: () {
+                                navigateTo(context,  MissionsScreen());
+                              },
+                            ),
+
+                            const SizedBox(width: 30.0),
+
+                            defaultButton(
+                              fSize: 20.0,
+                              radius: 20.0,
+                              width: 250.0,
+                              text: movesBtn,
+                              function: () {
+                                navigateTo(context,  MovesScreen());
+                              },
+                            ),
+
+                          ],
+                        ),
                         // Row(
                         //   mainAxisAlignment: MainAxisAlignment.center,
                         //   children: [
@@ -313,9 +362,7 @@ class MainMenuScreen extends StatelessWidget {
                                 width: 250.0,
                                 text: printBtn1,
                                 function: () async {
-                                  final ALL =
                                   await CacheHelper.getData(key: 'ALL');
-                                  final VAC =
                                   await CacheHelper.getData(key: 'VAC');
 
                                   cubit.createTamamDoc();

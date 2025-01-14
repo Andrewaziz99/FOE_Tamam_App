@@ -44,6 +44,7 @@ Widget defaultButton({
   double width = double.infinity,
   Color background = Colors.white,
   bool isUpperCase = true,
+  bool isClicked = false,
   double radius = 0.0,
   double? fSize,
   Color tColor = Colors.black,
@@ -55,7 +56,7 @@ Widget defaultButton({
       height: 40.0,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        color: background,
+        color: isClicked? background : Colors.amberAccent,
       ),
       child: MaterialButton(
         shape: RoundedRectangleBorder(

@@ -47,6 +47,7 @@ Widget addSoldier(cubit, context, submitBtn) => SingleChildScrollView(
                 child: InkWell(
                   onTap: () {
                     cubit.pickImage();
+                    imageController.text = cubit.savedImagePath;
                   },
                   child: const Icon(
                     Icons.camera_alt_outlined,

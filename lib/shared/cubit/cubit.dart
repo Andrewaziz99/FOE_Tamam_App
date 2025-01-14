@@ -6,21 +6,107 @@ import 'package:open_filex/open_filex.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:tamam/models/Soldiers/soldier_model.dart';
 import 'package:tamam/models/Vacations/vacation_model.dart';
+import 'package:tamam/modules/Soldiers/new_soldier_screen.dart';
 import 'package:tamam/shared/cubit/states.dart';
 import 'package:tamam/shared/network/local/cache_helper.dart';
 import '../components/constants.dart';
 import 'package:docx_template/docx_template.dart';
+
+//updateInVAC ==>  0 ----> Not in Vacation,  1 ----> In Vacation
 
 class AppCubit extends Cubit<AppStates> {
   AppCubit() : super(AppInitialState());
 
   static AppCubit get(context) => BlocProvider.of(context);
 
+  final currentDate =
+      convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
+
   String? selectedValue;
 
   void changeSelectedValue(String value) {
     selectedValue = value;
     emit(changeSoldierData());
+  }
+
+
+  Future<void> createMissionDoc(missionsList) async {
+    emit(printMissionsLoadingState());
+
+    try {
+      // Locate and read the test template
+      final appDir = await getTemplatesFolder();
+      final missionsFile = File('$appDir\\Missions.docx');
+
+      if (!await missionsFile.exists()) {
+        throw Exception("Missions file not found: ${missionsFile.path}");
+      }
+
+      final missionsBytes = await missionsFile.readAsBytes();
+      final missionDoc = await DocxTemplate.fromBytes(missionsBytes);
+
+      // Create a list of rows for the table content
+      List<RowContent> allRows = [];
+
+      final logoFileContent =
+          await File('$appDir\\images\\logo.png').readAsBytes();
+      final dayDate =
+          convertToArabic(DateFormat('yyyy-MM-dd').format(DateTime.now()));
+
+      final currentDate =
+          convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
+
+      final today = DateTime.now();
+      final weekday =
+          getWeekDay(DateFormat('EEEE').format(today).toLowerCase());
+
+      for (int i = 0; i < missionsList.length; i++) {
+        final data = missionsList[i];
+
+        final row = RowContent()
+          ..add(TextContent("name", data['soldierName']))
+          ..add(TextContent("level", soldier))
+          ..add(
+              TextContent("job1", convertAllToArabic(data['soldierFunction1'])))
+          ..add(
+              TextContent("job2", convertAllToArabic(data['soldierFunction2'])))
+          ..add(TextContent("num", convertToArabic((i + 1).toString())));
+
+        allRows.add(row);
+      }
+
+      // Populate placeholders
+      Content content = Content();
+      content
+        ..add(ImageContent("logo", logoFileContent))
+        ..add(TextContent("dept_Name", office))
+        ..add(TextContent("currentDate", currentDate))
+        ..add(TextContent("day", weekday))
+        ..add(TextContent("date", currentDate))
+        ..add(TextContent("space", '\n'))
+        ..add(TableContent('table', allRows));
+
+      // Generate the document for the current item
+      final generatedDoc = await missionDoc.generate(content);
+
+      if (generatedDoc != null) {
+        final mission = File('$appDir\\output\\$missions $dayDate.docx');
+        await mission.writeAsBytes(generatedDoc, flush: true);
+
+        print("Document generated successfully at: ${mission.path}");
+
+        emit(printMissionsSuccessState());
+
+        final result = await OpenFilex.open(mission.path);
+        print('Open file result: ${result.type}');
+      } else {
+        emit(printMissionsErrorState());
+        throw Exception("Failed to generate document");
+      }
+    } catch (e) {
+      emit(printMissionsErrorState());
+      print("Error: $e");
+    }
   }
 
   List<Map<dynamic, dynamic>> soldiers = [];
@@ -38,21 +124,33 @@ class AppCubit extends Cubit<AppStates> {
     emit(addToListSuccess());
   }
 
+  void updateList(index, soldierID, name, fromDate, toDate, feedBack, rank) {
+    emit(updateListLoading());
+    soldiers[index] = {
+      'soldierID': soldierID,
+      'name': name,
+      'rank': rank,
+      'fromDate': fromDate,
+      'toDate': toDate,
+      'feedback': feedBack,
+      'num': index,
+    };
+    emit(updateListSuccess());
+  }
+
   Future<void> createMOVDocFromList(
       List<Map<dynamic, dynamic>> dataList) async {
     try {
       // Locate and read the test template
-      // final appDir = await getApplicationDocumentsDirectory();
-      final movementFile = File('templates/movements.docx');
+      final appDir = await getTemplatesFolder();
+      final movementFile = File('$appDir\\movements.docx');
 
       if (!await movementFile.exists()) {
         throw Exception("Movements file not found: ${movementFile.path}");
       }
 
-      final VAC = await CacheHelper.getData(key: 'VAC') ?? 0;
-
       final movementBytes = await movementFile.readAsBytes();
-      final MoveDoc = await DocxTemplate.fromBytes(movementBytes);
+      final moveDoc = await DocxTemplate.fromBytes(movementBytes);
 
       // Create a list of rows for the table content
       List<RowContent> allRows = [];
@@ -63,7 +161,7 @@ class AppCubit extends Cubit<AppStates> {
           convertToArabic(DateFormat('yyyy').format(DateTime.now()));
 
       final logoFileContent =
-          await File('assets/images/logo.png').readAsBytes();
+          await File('$appDir\\images\\logo.png').readAsBytes();
       final dayDate =
           convertToArabic(DateFormat('yyyy-MM-dd').format(DateTime.now()));
 
@@ -78,8 +176,6 @@ class AppCubit extends Cubit<AppStates> {
           .format(DateTime.now().add(const Duration(days: 1))));
 
       for (int i = 0; i < dataList.length; i++) {
-        makeVacation(soldierID: dataList[i]['soldierID'], fromDate: dataList[i]['fromDate'], toDate: dataList[i]['toDate'], feedback: dataList[i]['feedback'], rank: dataList[i]['rank'], name: dataList[i]['name']);
-
 
         final data = dataList[i];
 
@@ -110,10 +206,10 @@ class AppCubit extends Cubit<AppStates> {
         ..add(TableContent('table', allRows));
 
       // Generate the document for the current item
-      final generatedDoc = await MoveDoc.generate(content);
+      final generatedDoc = await moveDoc.generate(content);
 
       if (generatedDoc != null) {
-        final movements = File('templates/$DOC_TYP $dayDate.docx');
+        final movements = File('$appDir\\output\\$DOC_TYP $dayDate.docx');
         await movements.writeAsBytes(generatedDoc, flush: true);
 
         print("Document generated successfully at: ${movements.path}");
@@ -132,85 +228,103 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-  // Future<void> createVACDocFromList(List<Map<String, dynamic>> dataList) async {
-  //   try {
-  //     // final appDir = await getApplicationDocumentsDirectory();
-  //
-  //     final vacationPassesFile = File('templates/test.docx');
-  //
-  //     if (!await vacationPassesFile.exists()) {
-  //       throw Exception("Vacation Passes file not found: ${vacationPassesFile.path}");
-  //     }
-  //
-  //
-  //     final vacationPassesBytes = await vacationPassesFile.readAsBytes();
-  //     final VacDoc = await DocxTemplate.fromBytes(vacationPassesBytes);
-  //
-  //     final dayDate = convertToArabic(
-  //         DateFormat('yyyy-MM-dd').format(DateTime.now()));
-  //
-  //     final FH = convertToArabic('900');
-  //     final TH = convertToArabic('1000');
-  //
-  //
-  //     // Create a list of rows for the table content
-  //     List<RowContent> allRows = [];
-  //
-  //
-  //     for (int i = 0; i < dataList.length; i++) {
-  //       final data = dataList[i];
-  //
-  //
-  //
-  //       // Create a row for the current data
-  //       final row = RowContent()
-  //         ..add(TextContent("name", data['name']))
-  //         ..add(TextContent("fromDate", data['fromDate']))
-  //         ..add(TextContent("toDate", data['toDate']))
-  //         ..add(TextContent("level", data['rank']))
-  //         ..add(TextContent("FH", FH))
-  //         ..add(TextContent("TH", TH)
-  //         );
-  //
-  //       // Add the row to our collection
-  //       allRows.add(row);
-  //     }
-  //     // Populate placeholders
-  //     Content content = Content();
-  //     content
-  //       .add(TableContent('table', allRows)
-  //       );
-  //     print(content.key);
-  //
-  //     // Generate the document for the current item
-  //     final generatedVacationPassesDoc = await VacDoc.generate(content);
-  //
-  //
-  //     if (generatedVacationPassesDoc != null) {
-  //
-  //       final vacationPasses = File('templates/$DOC_VAC $dayDate.docx');
-  //       await vacationPasses.writeAsBytes(generatedVacationPassesDoc);
-  //
-  //
-  //       print("Document generated successfully at: ${vacationPasses.path}");
-  //
-  //       // final result = await OpenFile.open(outputFile.path, type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-  //       // print("OpenFile result: Type - ${result.type}, Message - ${result.message}");
-  //
-  //       emit(genTableSuccess());
-  //     } else {
-  //       throw Exception("Failed to generate document");
-  //     }
-  //   } catch (e) {
-  //     print("Error: $e");
-  //   }
-  // }
+  Future<void> createExtendDoc(List<VacationModel> dataList) async {
+    try {
+      // Locate and read the test template
+      final appDir = await getTemplatesFolder();
+      final extendsFile = File('$appDir\\extends.docx');
+
+      if (!await extendsFile.exists()) {
+        throw Exception("extends file not found: ${extendsFile.path}");
+      }
+
+      final extendsBytes = await extendsFile.readAsBytes();
+      final extendsDoc = await DocxTemplate.fromBytes(extendsBytes);
+
+      // Create a list of rows for the table content
+      List<RowContent> allRows = [];
+
+      var id = await CacheHelper.getData(key: 'id') ?? 1;
+
+      final currentYear =
+          convertToArabic(DateFormat('yyyy').format(DateTime.now()));
+
+      final logoFileContent =
+          await File('$appDir\\images\\logo.png').readAsBytes();
+      final dayDate =
+          convertToArabic(DateFormat('yyyy-MM-dd').format(DateTime.now()));
+
+      final currentDate =
+          convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
+
+      final today = DateTime.now();
+      final weekday =
+          getWeekDay(DateFormat('EEEE').format(today).toLowerCase());
+
+      for (int i = 0; i < dataList.length; i++) {
+        extendVacation(
+            soldierID: dataList[i].soldierId,
+            fromDate: dataList[i].fromDate,
+            toDate: dataList[i].toDate,
+            extend: 1);
+
+        final data = dataList[i];
+
+        // Create a row for the current data
+        final row = RowContent()
+          ..add(TextContent("name", data.name))
+          ..add(TextContent("fromDate", data.fromDate))
+          ..add(TextContent("toDate", data.toDate))
+          ..add(TextContent("level", data.rank))
+          ..add(TextContent("feedback", data.feedback))
+          ..add(TextContent("num", convertToArabic((i + 1).toString())));
+
+        // Add the row to our collection
+        allRows.add(row);
+      }
+      // Populate placeholders
+      Content content = Content();
+      content
+        ..add(ImageContent("logo", logoFileContent))
+        ..add(TextContent("id", convertToArabic(id.toString())))
+        ..add(TextContent("year", currentYear))
+        ..add(TextContent("dept_Name", office))
+        ..add(TextContent("currentDate", currentDate))
+        ..add(TextContent("doc_Typ", DOC_EXT))
+        ..add(TextContent("day", weekday))
+        ..add(TextContent("date", currentDate))
+        ..add(TextContent("space", '\n'))
+        ..add(TableContent('table', allRows));
+
+      // Generate the document for the current item
+      final generatedDoc = await extendsDoc.generate(content);
+
+      if (generatedDoc != null) {
+        final extendsDoc = File('$appDir\\output\\$DOC_EXT $dayDate.docx');
+        await extendsDoc.writeAsBytes(generatedDoc, flush: true);
+
+        print("Document generated successfully at: ${extendsDoc.path}");
+
+        await CacheHelper.saveData(key: 'id', value: id + 1);
+
+        emit(genTableSuccess());
+
+        final result = await OpenFilex.open(extendsDoc.path);
+        print('Open file result: ${result.type}');
+      } else {
+        throw Exception("Failed to generate document");
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
 
   Future<void> createVACDocFromList(
       List<Map<dynamic, dynamic>> dataList) async {
     try {
       // Load the Word template
-      final vacationPassesFile = File('templates/test1.docx');
+      final appDir = await getTemplatesFolder();
+      final vacationPassesFile = File('$appDir\\VacationPasses.docx');
 
       if (!await vacationPassesFile.exists()) {
         throw Exception(
@@ -248,9 +362,11 @@ class AppCubit extends Cubit<AppStates> {
       if (generatedVacationPassesDoc != null) {
         final dayDate =
             convertToArabic(DateFormat('yyyy-MM-dd').format(DateTime.now()));
-        final vacationPasses = File('templates/$DOC_VAC $dayDate.docx');
+        final vacationPasses = File('$appDir\\output\\$DOC_VAC $dayDate.docx');
         await vacationPasses.writeAsBytes(generatedVacationPassesDoc);
 
+        final result = await OpenFilex.open(vacationPasses.path);
+        print('Open file result: ${result.type}');
         print("Document generated successfully at: ${vacationPasses.path}");
         emit(genTableSuccess());
       } else {
@@ -261,115 +377,38 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-  // Future<void> createVACDocFromList(List<Map<String, dynamic>> dataList) async {
-  //   try {
-  //     final vacationPassesFile = File('templates/test1.docx');
-  //
-  //     if (!await vacationPassesFile.exists()) {
-  //       throw Exception("Vacation Passes file not found: ${vacationPassesFile.path}");
-  //     }
-  //
-  //     final vacationPassesBytes = await vacationPassesFile.readAsBytes();
-  //     final templateDoc = await DocxTemplate.fromBytes(vacationPassesFile.readAsBytesSync());
-  //
-  //     final dayDate = convertToArabic(
-  //         DateFormat('yyyy-MM-dd').format(DateTime.now()));
-  //
-  //     final FH = convertToArabic('900');
-  //     final TH = convertToArabic('1000');
-  //
-  //     // Constants for layout
-  //     const permitsPerRow = 3;
-  //
-  //     // Calculate number of rows needed
-  //     final int totalRows = (dataList.length / permitsPerRow).ceil();
-  //
-  //     // Create a list to hold all permit rows
-  //     List<RowContent> allRows = [];
-  //
-  //     // Process data in groups of 3 (permits per row)
-  //     for (int i = 0; i < totalRows; i++) {
-  //       final startIdx = i * permitsPerRow;
-  //       final endIdx = min(startIdx + permitsPerRow, dataList.length);
-  //
-  //       // Create content for one row (up to 3 permits)
-  //       final rowContent = RowContent();
-  //
-  //       // Add permits for this row
-  //       for (int j = startIdx; j < endIdx; j++) {
-  //         final data = dataList[j];
-  //
-  //         rowContent
-  //           ..add(TextContent("level", data['rank']))
-  //           ..add(TextContent("name", data['name']))
-  //           ..add(TextContent("fromDate", data['fromDate']))
-  //           ..add(TextContent("toDate", data['toDate']))
-  //           ..add(TextContent("FH", FH))
-  //           ..add(TextContent("TH", TH));
-  //       }
-  //
-  //       allRows.add(rowContent);
-  //     }
-  //
-  //     // Create the final content with all rows
-  //     Content content = Content()
-  //       ..add(TableContent("table", allRows));
-  //
-  //     // Generate the document
-  //     final generatedDoc = await templateDoc.generate(content);
-  //
-  //     if (generatedDoc != null) {
-  //       final outputFile = File('templates/$DOC_VAC $dayDate.docx');
-  //       await outputFile.writeAsBytes(generatedDoc);
-  //       print("Document generated successfully at: ${outputFile.path}");
-  //       emit(genTableSuccess());
-  //     } else {
-  //       throw Exception("Failed to generate document");
-  //     }
-  //   } catch (e) {
-  //     print("Error: $e");
-  //     emit(genTableError());
-  //   }
-  // }
+  var error = '';
 
   Future<void> createTamamDoc() async {
+    getAllSoldiers();
+    getActiveVacations();
 
     emit(TamamLoading());
 
     final T_id = await CacheHelper.getData(key: 'T_id') ?? 1;
 
-    getVacations();
-    RowContent row = RowContent();
-    List <RowContent> allRows = [];
+    List<RowContent> allRows = [];
 
-    int num = 0;
 
-    int VAC = 0;
-    int CAP_VAC = 0;
-    VacData.forEach((element) {
-      if (element.rank == 'جندى') {
-        VAC++;
-      }
-      else {
-        CAP_VAC++;
-      }
+    for (int i = 0; i < VacData.length; i++) {
+      final vacationData = VacData[i];
+
+      RowContent row = RowContent();
       row
-        ..add(TextContent("name", element.name))
-        ..add(TextContent("fromDate", element.fromDate))
-        ..add(TextContent("toDate", element.toDate))
-        ..add(TextContent("level", element.rank))
-        ..add(TextContent("status", ''))
-        ..add(TextContent("num", convertToArabic('${num++}')));
-
+        ..add(TextContent("name", vacationData.name))
+        ..add(TextContent("fromDate", vacationData.fromDate))
+        ..add(TextContent("toDate", vacationData.toDate))
+        ..add(TextContent("level", vacationData.rank))
+        ..add(TextContent("status", vacation))
+        ..add(TextContent("num", convertToArabic((i + 1).toString())));
 
       allRows.add(row);
-
-    });
+    }
 
     try {
       // Locate and read the test template
-      // final appDir = await getApplicationDocumentsDirectory();
-      final tamamFile = File('templates/tamam1.docx');
+      final appDir = await getTemplatesFolder();
+      final tamamFile = File('$appDir\\tamam1.docx');
 
       if (!await tamamFile.exists()) {
         throw Exception("Tamam file not found: ${tamamFile.path}");
@@ -378,88 +417,56 @@ class AppCubit extends Cubit<AppStates> {
       final tamamBytes = await tamamFile.readAsBytes();
       final tamamDoc = await DocxTemplate.fromBytes(tamamBytes);
 
-      final dayDate =
-          convertToArabic(DateFormat('yyyy-MM-dd').format(DateTime.now()));
+      final dayDate = convertToArabic(DateFormat('yyyy-MM-dd').format(DateTime.now()));
 
-      final currentDate =
-          convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
+      final currentDate = convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
 
       final today = DateTime.now();
-      final weekday =
-          getWeekDay(DateFormat('EEEE').format(today).toLowerCase());
+      final weekday = getWeekDay(DateFormat('EEEE').format(today).toLowerCase());
 
-      final logoFileContent =
-          await File('assets/images/logo.png').readAsBytes();
-      final signatureFileContent =
-          await File('assets/images/signature1.png').readAsBytes();
-
-      getSoldiersWhere('soldierRank = \'جندى\'');
-      await CacheHelper.saveData(key: 'Sol_NUM', value: soldiers_data.length);
-      //
-      getSoldiersWhere('soldierRank != \'جندى\'');
-      await CacheHelper.saveData(key: 'CAPS_NUM', value: soldiers_data.length);
-
-      //
-      // getSoldiersWhere('soldierRank != \'جندى\' AND inVAC = 1');
-      // await CacheHelper.saveData(key: 'CAPS_OUT', value: soldiers_data.length);
-      //
-      // getSoldiersWhere('soldierRank = \'جندى\' AND inVAC = 1');
-      // await CacheHelper.saveData(key: 'VAC', value: soldiers_data.length);
-      //
-      // getSoldiersWhere('soldierRank = \'جندى\' AND isOUT = 1');
-      // await CacheHelper.saveData(
-      //     key: 'OUT_SOL_NUM', value: soldiers_data.length);
-      //
-      // getSoldiersWhere('isOUT = 1');
-      // await CacheHelper.saveData(key: 'OUT', value: soldiers_data.length);
-      //
-      final ALL =
-          await convertToArabic(CacheHelper.getData(key: 'ALL').toString());
-      //
-      // final VAC =
-      //     await convertToArabic(CacheHelper.getData(key: 'VAC').toString());
-      //
-      // final CAPS_OUT = await convertToArabic(
-      //     CacheHelper.getData(key: 'CAPS_OUT').toString());
-      //
-      // final OUT =
-      //     await convertToArabic(CacheHelper.getData(key: 'OUT').toString());
-      //
-      final PRES_SOL_NUM = await convertToArabic(
-          (CacheHelper.getData(key: 'Sol_NUM') -
-                  VAC)
-              .toString());
-      //
-      // final OUT_SOL_NUM = await convertToArabic(
-      //     CacheHelper.getData(key: 'OUT_SOL_NUM').toString());
-      //
-      // final PRESENT = await convertToArabic(
-      //     (CacheHelper.getData(key: 'ALL') - CacheHelper.getData(key: 'VAC'))
-      //         .toString());
-      //
-      final SOLDIERS_NUM =
-          await convertToArabic(CacheHelper.getData(key: 'Sol_NUM').toString());
-
-      final CAPS_NUM = await convertToArabic(
-          CacheHelper.getData(key: 'CAPS_NUM').toString());
-      //
-      final PRES_CAPS = await convertToArabic(
-          (CacheHelper.getData(key: 'CAPS_NUM') -
-                  CAP_VAC)
-              .toString());
+      final currentYear = convertToArabic(DateFormat('yyyy').format(DateTime.now()));
 
 
 
-      final PRESENT = convertToArabic((CacheHelper.getData(key: 'ALL') - VAC).toString());
-
-      final OUT = convertToArabic('0');
-      final OUT_SOL_NUM = convertToArabic('0');
+      final logoFileContent = await File('$appDir\\images\\logo.png').readAsBytes();
+      final signatureFileContent = await File('$appDir\\images\\signature1.png').readAsBytes();
 
 
 
 
-      final currentYear =
-      convertToArabic(DateFormat('yyyy').format(DateTime.now()));
+
+
+      final allSoldiers = convertToArabic(CacheHelper.getData(key: 'ALL').toString());
+
+      final inVacation = convertToArabic((CacheHelper.getData(key: 'soldiersInVacation') + CacheHelper.getData(key: 'capSoldiersInVacation')).toString());
+
+      final present = convertToArabic((CacheHelper.getData(key: 'ALL') - CacheHelper.getData(key: 'soldiersInVacation') - CacheHelper.getData(key: 'capSoldiersInVacation')).toString());
+
+      final out = convertToArabic('0');
+
+      var soldiersInVacation = convertToArabic(CacheHelper.getData(key: 'soldiersInVacation').toString());
+
+      final soldiersNumber = convertToArabic(CacheHelper.getData(key: 'soldiersNumber').toString());
+
+      final capSoldiersNumber = convertToArabic(CacheHelper.getData(key: 'capSoldiersNumber').toString());
+
+      final presentSoldiersNumber = convertToArabic((CacheHelper.getData(key: 'soldiersNumber') - CacheHelper.getData(key: 'soldiersInVacation')).toString());
+
+      final presentCapSoldiersNumber = convertToArabic((CacheHelper.getData(key: 'capSoldiersNumber') - CacheHelper.getData(key: 'capSoldiersInVacation')).toString());
+
+      var capSoldiersInVacation = convertToArabic(CacheHelper.getData(key: 'capSoldiersInVacation').toString());
+
+
+
+      if (inVacation == 0) {
+        soldiersInVacation = convertToArabic('0');
+        capSoldiersInVacation = convertToArabic('0');
+
+      }
+
+
+
+
 
 
       // Populate placeholders
@@ -472,16 +479,19 @@ class AppCubit extends Cubit<AppStates> {
         ..add(TextContent("year", currentYear))
         ..add(TextContent("currentDate", currentDate))
         ..add(TextContent("day", weekday))
-        ..add(TextContent("ALL", ALL))
-        ..add(TextContent("PRESENT", PRESENT))
-        ..add(TextContent("VAC", convertToArabic(VAC.toString())))
-        ..add(TextContent("OUT", OUT))
-        ..add(TextContent("SOLDIERS_NUM", SOLDIERS_NUM))
-        ..add(TextContent("PRES_SOL_NUM", PRES_SOL_NUM))
-        ..add(TextContent("OUT_SOL_NUM", OUT_SOL_NUM))
-        ..add(TextContent("NUM_CAPS", CAPS_NUM))
-        ..add(TextContent("PRES_CAPS", PRES_CAPS))
-        ..add(TextContent("OUT_CAPS", convertToArabic(CAP_VAC.toString())))
+
+
+
+        ..add(TextContent("ALL", allSoldiers))
+        ..add(TextContent("PRESENT", present))
+        ..add(TextContent("VAC", inVacation))
+        ..add(TextContent("OUT", out))
+        ..add(TextContent("SOLDIERS_NUM", soldiersNumber))
+        ..add(TextContent("PRES_SOL_NUM", presentSoldiersNumber))
+        ..add(TextContent("OUT_SOL_NUM", soldiersInVacation))
+        ..add(TextContent("NUM_CAPS", capSoldiersNumber))
+        ..add(TextContent("PRES_CAPS", presentCapSoldiersNumber))
+        ..add(TextContent("OUT_CAPS", capSoldiersInVacation))
         ..add(TableContent('table', allRows))
         ..add(TextContent("space", '\n'));
 
@@ -489,52 +499,73 @@ class AppCubit extends Cubit<AppStates> {
       final generatedDoc = await tamamDoc.generate(content);
 
       if (generatedDoc != null) {
-        final tamam = File('templates/tamam $dayDate.docx');
+        final tamam = File('$appDir\\output\\$DOC_TAMAM $dayDate.docx');
         await tamam.writeAsBytes(generatedDoc);
 
         print("Document generated successfully at: ${tamam.path}");
 
+        final result = await OpenFilex.open(tamam.path);
+        print(result);
+
         emit(TamamSuccess());
 
         await CacheHelper.saveData(key: 'T_id', value: T_id + 1);
-
-        final result = await OpenFilex.open(tamam.path);
-        print('Open file result: ${result.type}');
       } else {
         emit(TamamError());
+        error = 'Failed to generate document';
         throw Exception("Failed to generate document");
       }
     } catch (e) {
+      error = e.toString();
       emit(TamamError());
       print("Error: $e");
     }
   }
 
+  Future<String> saveImage(File imageFile) async {
+    try {
+      final ImagesPath = await getImagesFolder();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'image_$timestamp.jpg';
 
+      final imagesDir = Directory(ImagesPath);
+      if (!await imagesDir.exists()) {
+        await imagesDir.create(recursive: true);
+      }
+
+      final savedImage = await imageFile.copy('${imagesDir.path}/$fileName');
+      return savedImage.path;
+    } catch (e) {
+      throw Exception('Failed to save image: $e');
+    }
+  }
 
   var image;
+  var savedImagePath;
 
-  void pickImage() {
+  Future<void> pickImage() async {
     emit(pickImageLoading());
     FilePicker.platform
         .pickFiles(
       type: FileType.image,
       allowMultiple: false,
     )
-        .then((value) {
+        .then((value) async {
       if (value != null) {
         image = value.files.first.path;
-        print(image);
+        savedImagePath = await saveImage(File(image));
+        imageController.text = savedImagePath;
         emit(pickImageSuccess());
       } else {
         emit(pickImageError());
       }
     }).catchError((error) {
       emit(pickImageError());
+      print(error);
     });
   }
 
-  void enterNewSoldier({
+  Future<void> enterNewSoldier({
     required name,
     required rank,
     required phone,
@@ -560,10 +591,10 @@ class AppCubit extends Cubit<AppStates> {
     required joinDate,
     inVAC,
     isOUT,
-  }) {
+  }) async {
     emit(enterNewSoldierLoading());
 
-    final dbPath = getDatabasePath();
+    final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
     try {
@@ -618,11 +649,11 @@ class AppCubit extends Cubit<AppStates> {
 
   List<String> soldiersName = [];
 
-  void getSoldiers() {
-    emit(getSoldiersLoading());
+  Future<void> getAllSoldiers() async {
+    emit(getAllSoldiersLoading());
     soldiersName.clear();
 
-    final dbPath = getDatabasePath();
+    final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
     try {
@@ -631,25 +662,50 @@ class AppCubit extends Cubit<AppStates> {
       ''');
       soldiersList = soldiers.map((e) => SoldierModel.fromJson(e)).toList();
 
+      if (soldiersList.isEmpty) {
+        CacheHelper.saveData(key: 'ALL', value: 0);
+        CacheHelper.saveData(key: 'soldiersNumber', value: 0);
+        CacheHelper.saveData(key: 'capSoldiersNumber', value: 0);
+        CacheHelper.saveData(key: 'soldiersInVacation', value: 0);
+        CacheHelper.saveData(key: 'capSoldiersInVacation', value: 0);
+      }
+
+
+      int soldiersNum = 0;
+      int capSoldiersNum = 0;
+
       for (var value in soldiersList) {
         soldiersName.add(value.soldierName!);
         soldiersName.sort();
+
+
+        if (value.soldierRank == 'جندى') {
+          soldiersNum++;
+        } else {
+          capSoldiersNum++;
+        }
+        CacheHelper.saveData(key: 'soldiersNumber', value: soldiersNum);
+        CacheHelper.saveData(key: 'capSoldiersNumber', value: capSoldiersNum);
+
       }
       CacheHelper.saveData(key: 'ALL', value: soldiersList.length);
 
-      db.dispose();
-      emit(getSoldiersSuccess());
+
+      emit(getAllSoldiersSuccess());
     } catch (e) {
-      emit(getSoldiersError());
+      emit(getAllSoldiersError());
       print(e);
+    } finally {
+      db.dispose();
     }
   }
 
   SoldierModel? soldierModel;
-  void getSoldierById(soldierID) {
-    emit(getSoldierLoading());
 
-    final dbPath = getDatabasePath();
+  Future<void> getSoldierById(soldierID) async {
+    emit(getSoldierByIdLoading());
+
+    final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
     try {
@@ -657,20 +713,22 @@ class AppCubit extends Cubit<AppStates> {
         SELECT * FROM soldiers WHERE soldierId = "$soldierID"
       ''');
       soldierModel = SoldierModel.fromJson(soldiers.first);
-      db.dispose();
-      emit(getSoldierSuccess());
+      emit(getSoldierByIdSuccess());
     } catch (e) {
-      emit(getSoldierError());
+      emit(getSoldierByIdError());
+      print(e);
+    } finally {
+      db.dispose();
     }
   }
 
   List<SoldierModel> soldiers_data = [];
 
-  void getSoldiersWhere(condition) {
-    emit(getSoldiersLoading());
+  Future<void> getSoldiersWhere(condition) async {
+    emit(getAllSoldiersLoading());
     soldiers_data.clear();
 
-    final dbPath = getDatabasePath();
+    final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
     try {
@@ -678,22 +736,50 @@ class AppCubit extends Cubit<AppStates> {
         SELECT * FROM soldiers WHERE $condition
       ''');
       soldiers_data = soldiers.map((e) => SoldierModel.fromJson(e)).toList();
-      db.dispose();
-      emit(getSoldiersSuccess());
+      emit(getAllSoldiersSuccess());
     } catch (e) {
-      emit(getSoldiersError());
+      emit(getAllSoldiersError());
       print(e);
+    } finally {
+      db.dispose();
     }
   }
 
   List<SoldierModel> soldierNotInVAC = [];
 
-  void getNotInVAC() {
-    emit(getSoldierLoading());
+  Future<void> getSoldiersNotInVAC() async {
+    emit(getSoldierByIdLoading());
 
     soldiersName.clear();
 
-    final dbPath = getDatabasePath();
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      final soldiers = db.select('''
+        SELECT * FROM soldiers WHERE inVAC = 0 AND soldierRank = "جندى"
+      ''');
+      soldierNotInVAC = soldiers.map((e) => SoldierModel.fromJson(e)).toList();
+
+      for (var value in soldierNotInVAC) {
+        soldiersName.add(value.soldierName!);
+        soldiersName.sort();
+      }
+
+      db.dispose();
+      emit(getSoldierByIdSuccess());
+    } catch (e) {
+      emit(getSoldierByIdError());
+      print(e);
+    }
+  }
+
+  Future<void> getAllNotInVAC() async {
+    emit(getSoldierByIdLoading());
+
+    soldiersName.clear();
+
+    final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
     try {
@@ -708,19 +794,20 @@ class AppCubit extends Cubit<AppStates> {
       }
 
       db.dispose();
-      emit(getSoldierSuccess());
+      emit(getSoldierByIdSuccess());
     } catch (e) {
-      emit(getSoldierError());
+      emit(getSoldierByIdError());
       print(e);
     }
   }
 
+
   List<SoldierModel> soldierInVAC = [];
 
-  void getInVAC() {
-    emit(getSoldierLoading());
+  Future<void> getInVAC() async {
+    emit(getSoldierByIdLoading());
 
-    final dbPath = getDatabasePath();
+    final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
     try {
@@ -729,17 +816,17 @@ class AppCubit extends Cubit<AppStates> {
       ''');
       soldierNotInVAC = soldiers.map((e) => SoldierModel.fromJson(e)).toList();
       db.dispose();
-      emit(getSoldierSuccess());
+      emit(getSoldierByIdSuccess());
     } catch (e) {
-      emit(getSoldierError());
+      emit(getSoldierByIdError());
       print(e);
     }
   }
 
-  void updateInVAC(soldierID, value) {
+  Future<void> updateInVAC(soldierID, value) async {
     emit(updateSoldierLoading());
 
-    final dbPath = getDatabasePath();
+    final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
     try {
@@ -756,10 +843,10 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-  void updateIsOUT(soldierID) {
+  Future<void> updateIsOUT(soldierID) async {
     emit(updateSoldierLoading());
 
-    final dbPath = getDatabasePath();
+    final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
     try {
@@ -776,16 +863,16 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-  void makeVacation(
+  Future<void> makeVacation(
       {required soldierID,
       required fromDate,
       required toDate,
       required feedback,
       required rank,
-      required name}) {
+      required name}) async {
     emit(makeVacationLoading());
 
-    final dbPath = getDatabasePath();
+    final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
     try {
@@ -797,21 +884,20 @@ class AppCubit extends Cubit<AppStates> {
           rank TEXT NOT NULL,
           fromDate TEXT NOT NULL,
           toDate TEXT NOT NULL,
-          feedback TEXT NOT NULL
+          feedback TEXT NOT NULL,
+          isExtended INTEGER NOT NULL,
+          isActive INTEGER NOT NULL    
         )
       ''');
       // db.dispose();
     } catch (e) {
       print(e);
     }
+
     try {
-      db.execute('''
-        INSERT INTO vacations (
-          soldierId, name, rank, fromDate, toDate, feedback
-        ) VALUES (
-          "$soldierID", "$name", "$rank", "$fromDate", "$toDate", "$feedback"
-        )
-      ''');
+      db.execute(
+          ''' INSERT INTO vacations (soldierId, name, rank, fromDate, toDate, feedback, isExtended, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ''',
+          [soldierID, name, rank, fromDate, toDate, feedback, 0, 1]);
 
       updateInVAC(soldierID, 1);
 
@@ -819,7 +905,7 @@ class AppCubit extends Cubit<AppStates> {
     } catch (e) {
       emit(makeVacationError());
       print(e);
-    }finally{
+    } finally {
       db.dispose();
     }
   }
@@ -827,9 +913,10 @@ class AppCubit extends Cubit<AppStates> {
   List<VacationModel> VacData = [];
   VacationModel? vacationModel;
 
-  void getVacations() {
+  Future<void> getVacations() async {
     emit(getVacationsLoading());
-    final dbPath = getDatabasePath();
+
+    final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
     try {
@@ -837,24 +924,257 @@ class AppCubit extends Cubit<AppStates> {
         SELECT * FROM vacations
       ''');
       VacData = vacations.map((e) => VacationModel.fromJson(e)).toList();
-      db.dispose();
-
-      final currentDate = DateFormat('yyyy/MM/dd').format(DateTime.now());
 
       for (var vacation in VacData) {
-        if (convertArabicToEnglish(vacation.toDate!) == currentDate) {
+        if (vacation.toDate! == currentDate) {
+          updateActiveVacation(isActive: 0);
           updateInVAC(vacation.soldierId, 0);
         }
       }
-      CacheHelper.saveData(key: 'VAC', value: VacData.length);
+
       emit(getVacationsSuccess());
     } catch (e) {
       emit(getVacationsError());
       print(e);
+    } finally {
+      db.dispose();
     }
   }
 
-  void updateSoldier(
+  Future<void> updateVacation({
+    required soldierID,
+    required oldFromDate,
+    required oldToDate,
+    required oldFeedback,
+    required newFromDate,
+    required newToDate,
+    required newFeedback,
+  }) async {
+    emit(updateVacationLoadingState());
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      db.execute('''
+        UPDATE vacations
+        SET fromDate = ?, toDate = ?, feedback = ?
+        WHERE soldierId = ? AND fromDate = ? AND toDate = ? AND feedBack = ? AND isActive = 1
+      ''', [
+        newFromDate,
+        newToDate,
+        newFeedback,
+        soldierID,
+        oldFromDate,
+        oldToDate,
+        oldFeedback
+      ]);
+      emit(updateVacationSuccessState());
+      getVacations();
+    } catch (e) {
+      emit(updateVacationErrorState());
+      print(e);
+    } finally {
+      db.dispose();
+    }
+  }
+
+  Future<void> updateActiveVacation({required isActive}) async {
+    emit(updateActiveVacationLoadingState());
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      db.execute('''
+        UPDATE vacations
+        SET isActive = ?
+      ''', [isActive]);
+      emit(updateActiveVacationSuccessState());
+
+    } catch (e) {
+      emit(updateActiveVacationErrorState());
+      print(e);
+    } finally {
+      db.dispose();
+    }
+  }
+
+  Future<void> getExtendedVacations() async {
+    emit(getExtendedVacationLoadingState());
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      final vacations = db.select('''
+        SELECT * FROM vacations WHERE isExtended = 1
+      ''');
+      VacData = vacations.map((e) => VacationModel.fromJson(e)).toList();
+
+      // for (var vacation in VacData) {
+      //   if (vacation.toDate! == currentDate) {
+      //     updateVacation(isActive: 0);
+      //     updateInVAC(vacation.soldierId, 0);
+      //   }
+      // }
+
+      emit(getExtendedVacationSuccessState());
+    } catch (e) {
+      emit(getExtendedVacationErrorState());
+      print(e);
+    } finally {
+      db.dispose();
+    }
+  }
+
+  Future<void> getActiveVacations() async {
+    emit(getActiveVacationsLoadingState());
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      final vacations = db.select('''
+        SELECT * FROM vacations WHERE isActive = 1
+      ''');
+      VacData = vacations.map((e) => VacationModel.fromJson(e)).toList();
+
+      int soldiersInVacation = 0;
+      int capSoldiersInVacation = 0;
+
+      for (var vacation in VacData) {
+
+        if (vacation.rank == 'جندى') {
+          soldiersInVacation++;
+        }  else {
+          capSoldiersInVacation++;
+        }
+
+        CacheHelper.saveData(key: 'soldiersInVacation', value: soldiersInVacation);
+        CacheHelper.saveData(key: 'capSoldiersInVacation', value: capSoldiersInVacation);
+
+
+        if (vacation.toDate! == currentDate) {
+          // updateVacation(isActive: 0);
+          updateInVAC(vacation.soldierId, 0);
+        }
+      }
+      emit(getActiveVacationsSuccessState());
+    } catch (e) {
+      emit(getActiveVacationsErrorState());
+      print(e);
+    } finally {
+      db.dispose();
+    }
+  }
+
+  Future<void> getVacationsByName(SoldierName) async {
+    emit(getVacationsLoading());
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      final vacations = db.select('''
+        SELECT * FROM vacations WHERE name = ?
+      ''', [SoldierName]);
+      VacData = vacations.map((e) => VacationModel.fromJson(e)).toList();
+
+      final currentDate = DateFormat('yyyy/MM/dd').format(DateTime.now());
+
+      // for (var vacation in VacData) {
+      //   if (convertArabicToEnglish(vacation.toDate!) == currentDate) {
+      //     updateInVAC(vacation.soldierId, 0);
+      //   }
+      // }
+
+      emit(getVacationsSuccess());
+    } catch (e) {
+      emit(getVacationsError());
+      print(e);
+    } finally {
+      db.dispose();
+    }
+  }
+
+  Future<void> extendVacation({
+    required soldierID,
+    required fromDate,
+    required toDate,
+    required extend,
+  }) async {
+    emit(extendVacationLoadingState());
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    toDate = convertArabicToEnglish(toDate);
+    extend = convertArabicToEnglish(extend);
+
+    DateFormat toDateFormat = DateFormat("yyyy/MM/dd");
+    DateTime toDateDT = toDateFormat.parse(toDate);
+
+    final extendedDate = toDateDT.add(Duration(days: int.parse(extend)));
+
+    final extendedDateArabic =
+        convertToArabic(DateFormat("yyyy/MM/dd").format(extendedDate));
+
+    print('Updating vacation for soldier $soldierID to $extendedDateArabic');
+    try {
+      print('Updating VACATION DATA for soldier $soldierID to $extendedDateArabic');
+      print(convertToArabic(toDate));
+      final arabicToDate = convertToArabic(toDate);
+
+      db.execute('''
+        UPDATE vacations
+        SET toDate = '$extendedDateArabic', isExtended = 1
+        WHERE soldierId = '$soldierID' AND toDate = '$arabicToDate' AND isActive = 1
+      ''');
+
+      db.dispose();
+
+      emit(extendVacationSuccessState());
+    } catch (e) {
+      emit(extendVacationErrorState());
+      print('Error extending vacation: $e');
+    }
+
+  }
+
+  Future<void> stopVacation(
+      {required soldierID, required fromDate, required toDate}) async {
+    emit(StopVacationLoadingState());
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    final currentDate =
+        convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
+
+    try {
+      db.execute('''
+        UPDATE vacations
+        SET toDate = ?, isActive = 0, isExtended = 0
+        WHERE soldierId = ? AND fromDate = ? AND toDate = ? AND isActive = 1
+      ''', [currentDate, soldierID, fromDate, toDate]);
+
+      updateInVAC(soldierID, 0);
+
+      emit(StopVacationSuccessState());
+
+      getAllSoldiers();
+      getActiveVacations();
+      getVacations();
+    } catch (e) {
+      emit(StopVacationErrorState());
+      print(e);
+    } finally {
+      db.dispose();
+    }
+  }
+
+  Future<void> updateSoldier(
       {name,
       rank,
       phone,
@@ -877,12 +1197,10 @@ class AppCubit extends Cubit<AppStates> {
       num_of_siblings,
       skills,
       function,
-      joinDate,
-      inVAC,
-      isOUT}) {
+      joinDate}) async {
     emit(updateSoldierLoading());
 
-    final dbPath = getDatabasePath();
+    final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
     try {
@@ -910,9 +1228,7 @@ class AppCubit extends Cubit<AppStates> {
     soldierNumOfSiblings = "$num_of_siblings",
     soldierSkills = "$skills",
     soldierFunction = "$function",
-    soldierJoinDate = "$joinDate",
-    inVAC = $inVAC,
-    isOUT = $isOUT
+    soldierJoinDate = "$joinDate"
   WHERE soldierId = "$soldierID"
 ''');
       print("Soldier updated");
@@ -924,22 +1240,52 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-  void deleteSoldier(soldierId) {
+  Future<void> deleteSoldier(soldierId) async {
     emit(deleteSoldierLoading());
 
-    final dbPath = getDatabasePath();
+    final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
     try {
-      final soldiers = db.select('''
-        DELETE FROM soldiers WHERE soldierId = "$soldierId"
-      ''');
+      // Start a transaction to ensure both deletes succeed or both fail
+      db.execute('BEGIN TRANSACTION');
+
+      // Delete from first table
+      db.execute('''
+      DELETE FROM soldiers WHERE soldierId = ?
+    ''', [soldierId]);
+
+      // Delete from second table
+      db.execute('''
+      DELETE FROM vacations WHERE soldierId = ?
+    ''', [soldierId]);
+
+      // Commit the transaction
+      db.execute('COMMIT');
+
       db.dispose();
       emit(deleteSoldierSuccess());
-      getSoldiers();
+      getAllSoldiers();
     } catch (e) {
+      // Rollback on error
+      db.execute('ROLLBACK');
       emit(deleteSoldierError());
       print(e);
+    } finally {
+      db.dispose();
     }
+  }
+
+  List<Map<dynamic, dynamic>> missionsData = [];
+
+  void setMissions(soldierId, soldierName, soldierFunction1, soldierFunction2) {
+    missionsData.add({
+      'soldierId': soldierId,
+      'soldierName': soldierName,
+      'soldierFunction1': soldierFunction1,
+      'soldierFunction2': soldierFunction2,
+    });
+    print(missionsData);
+    emit(setMissionSuccess());
   }
 }

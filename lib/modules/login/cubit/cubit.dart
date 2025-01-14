@@ -8,6 +8,7 @@ import 'package:tamam/modules/login/cubit/states.dart';
 import 'package:tamam/modules/login/password_hashing.dart';
 import 'package:tamam/modules/mainMenu/mainmenu_screen.dart';
 import 'package:tamam/shared/components/components.dart';
+import 'package:tamam/shared/components/constants.dart';
 
 class LoginCubit extends Cubit<LoginStates> {
   LoginCubit() : super(LoginInitialState());
@@ -60,9 +61,8 @@ class LoginCubit extends Cubit<LoginStates> {
     emit(RegisterLoadingState());
 
 
-    final dbPath = await getDBPath();
-    final String path = dbPath;
-    final db =  sqlite3.open(path);
+    final dbPath = await getAppDatabaseFile();
+    final db =  sqlite3.open(dbPath);
 
 
     try{
@@ -107,9 +107,8 @@ class LoginCubit extends Cubit<LoginStates> {
     // final dbPath = getDatabasePath();
     // final db = sqlite3.open(dbPath);
 
-    final dbPath = await getDBPath();
-    final String path = dbPath;
-    final db =  sqlite3.open(path);
+    final dbPath = await getAppDatabaseFile();
+    final db =  sqlite3.open(dbPath);
 
 
     try {
