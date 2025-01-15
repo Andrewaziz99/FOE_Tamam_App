@@ -58,6 +58,7 @@ class VacationScreen extends StatelessWidget {
               editFeedBackController.text = cubit.VacData[index].feedback!;
 
             }
+            cubit.updateCheckedList();
 
           }
 
@@ -103,7 +104,16 @@ class VacationScreen extends StatelessWidget {
         },
         builder: (BuildContext context, Object? state) {
           var cubit = AppCubit.get(context);
-          // cubit.soldierData.clear();
+
+          // final List<Map<String, dynamic>> isChecked = List.generate(
+          //   cubit.soldiers.length,
+          //       (index) => {
+          //     'id': index,
+          //     'isChecked': false,
+          //   },
+          // );
+
+
           return Scaffold(
             appBar: AppBar(
               elevation: 0.5,
@@ -315,6 +325,7 @@ class VacationScreen extends StatelessWidget {
                               feedBackController.text,
                               soldierData['soldierRank']);
                           count++;
+                          cubit.updateCheckedList();
                         },
                         text: add),
                     const SizedBox(height: 20),
@@ -343,8 +354,7 @@ class VacationScreen extends StatelessWidget {
                                     //Delete Button
                                     IconButton(
                                       onPressed: () {
-                                        cubit.soldiers.removeAt(index);
-                                        cubit.emit(deleteFromListSuccess());
+                                        cubit.removeSoldierFromList(index);
                                       },
                                       icon: const Icon(
                                         Icons.delete,
@@ -558,6 +568,24 @@ class VacationScreen extends StatelessWidget {
                                     //Soldier Name
                                     Text(cubit.soldiers[index]['name']),
 
+                                    const Spacer(),
+                                    //CheckBox
+                                    Checkbox(
+                                        activeColor: Colors.green,
+                                        checkColor: Colors.white,
+                                        value: cubit.isChecked[index]['isChecked'],
+                                        onChanged: (val){
+                                          print(cubit.isChecked[index]['isChecked']);
+                                          cubit.triggerCheckBox(val!, index);
+                                          print(cubit.isChecked[index]['isChecked']);
+                                          // print(val);
+                                          // cubit.isChecked[index]['isChecked'] = val;
+                                        }
+                                    ),
+
+
+
+
                                     const SizedBox(width: 20),
                                   ],
                                 ),
@@ -571,6 +599,11 @@ class VacationScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+
+
+
+
+
                     const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -582,7 +615,11 @@ class VacationScreen extends StatelessWidget {
                             background: Colors.blue,
                             tColor: Colors.white,
                             function: () async {
-                              await cubit.createVACDocFromList(cubit.soldiers);
+                              final checkedSoldiers = cubit.soldiers.where((s) {
+                                final index = cubit.soldiers.indexOf(s);
+                                return cubit.isChecked[index]['isChecked'];
+                              }).toList();
+                                await cubit.createVACDocFromList(checkedSoldiers);
                             },
                             text: printBtn3),
                         const SizedBox(width: 20),
@@ -593,7 +630,11 @@ class VacationScreen extends StatelessWidget {
                             tColor: Colors.white,
                             radius: 20.0,
                             function: () async {
-                              await cubit.createMOVDocFromList(cubit.soldiers);
+                              final checkedSoldiers = cubit.soldiers.where((s) {
+                                final index = cubit.soldiers.indexOf(s);
+                                return cubit.isChecked[index]['isChecked'];
+                              }).toList();
+                                await cubit.createMOVDocFromList(checkedSoldiers);
                             },
                             text: printBtn2),
                         const SizedBox(width: 20),

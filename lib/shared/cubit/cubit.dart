@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
@@ -29,6 +30,31 @@ class AppCubit extends Cubit<AppStates> {
     emit(changeSoldierData());
   }
 
+  // List<bool> isChecked = [];
+  List<Map<String, dynamic>> isChecked = [];
+  void updateCheckedList() {
+    isChecked = List.generate(
+      soldiers.length,
+      (index) => {
+        'id': index,
+        'isChecked': false,
+      },
+    );
+    emit(UpdateCheckedListState());
+  }
+
+  void triggerCheckBox(val,index) {
+    isChecked[index]['isChecked'] = val;
+    emit(triggerCheckBoxState());
+  }
+
+
+
+
+  void removeSoldierFromList(int index) {
+    soldiers.removeAt(index);
+    emit(deleteFromListSuccess());
+  }
 
   Future<void> createMissionDoc(missionsList) async {
     emit(printMissionsLoadingState());
