@@ -135,6 +135,20 @@ class updateActiveVacationSuccessState extends AppStates {}
 
 class updateActiveVacationErrorState extends AppStates {}
 
+class updateActiveVacationForLoadingState extends AppStates {}
+
+class updateActiveVacationForSuccessState extends AppStates {}
+
+class updateActiveVacationForErrorState extends AppStates {}
+
 class triggerCheckBoxState extends AppStates {}
 
 class UpdateCheckedListState extends AppStates {}
+
+class deleteVacationLoadingState extends AppStates {}
+
+class deleteVacationSuccessState extends AppStates {}
+
+class deleteVacationErrorState extends AppStates {}
+
+

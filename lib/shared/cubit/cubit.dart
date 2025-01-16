@@ -137,7 +137,7 @@ class AppCubit extends Cubit<AppStates> {
 
   List<Map<dynamic, dynamic>> soldiers = [];
 
-  void AddToList(index, soldierID, name, fromDate, toDate, feedBack, rank) {
+  void AddToList(index, soldierID, name, fromDate, toDate, feedBack, rank, isSaved) {
     soldiers.add({
       'soldierID': soldierID,
       'name': name,
@@ -146,6 +146,7 @@ class AppCubit extends Cubit<AppStates> {
       'toDate': toDate,
       'feedback': feedBack,
       'num': index,
+      'isSaved': isSaved,
     });
     emit(addToListSuccess());
   }
@@ -164,8 +165,7 @@ class AppCubit extends Cubit<AppStates> {
     emit(updateListSuccess());
   }
 
-  Future<void> createMOVDocFromList(
-      List<Map<dynamic, dynamic>> dataList) async {
+  Future<void> createMOVDocFromList(List<Map<dynamic, dynamic>> dataList) async {
     try {
       // Locate and read the test template
       final appDir = await getTemplatesFolder();
@@ -345,8 +345,7 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-  Future<void> createVACDocFromList(
-      List<Map<dynamic, dynamic>> dataList) async {
+  Future<void> createVACDocFromList(List<Map<dynamic, dynamic>> dataList) async {
     try {
       // Load the Word template
       final appDir = await getTemplatesFolder();
@@ -953,7 +952,7 @@ class AppCubit extends Cubit<AppStates> {
 
       for (var vacation in VacData) {
         if (vacation.toDate! == currentDate) {
-          updateActiveVacation(isActive: 0);
+          updateActiveVacationFor(soldierId: vacation.soldierId, isActive: 0);
           updateInVAC(vacation.soldierId, 0);
         }
       }
@@ -1025,6 +1024,29 @@ class AppCubit extends Cubit<AppStates> {
       db.dispose();
     }
   }
+
+  Future<void> updateActiveVacationFor({required soldierId,required isActive}) async {
+    emit(updateActiveVacationForLoadingState());
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      db.execute('''
+        UPDATE vacations
+        SET isActive = ?
+        WHERE soldierId = '$soldierId'
+      ''', [isActive]);
+      emit(updateActiveVacationForSuccessState());
+
+    } catch (e) {
+      emit(updateActiveVacationForErrorState());
+      print(e);
+    } finally {
+      db.dispose();
+    }
+  }
+
 
   Future<void> getExtendedVacations() async {
     emit(getExtendedVacationLoadingState());
@@ -1175,19 +1197,19 @@ class AppCubit extends Cubit<AppStates> {
     final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
-    final currentDate =
-        convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
+    final currentDate = convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
+    updateActiveVacationFor(soldierId: soldierID, isActive: 0);
+    updateInVAC(soldierID, 0);
 
     try {
       db.execute('''
         UPDATE vacations
-        SET toDate = ?, isActive = 0, isExtended = 0
-        WHERE soldierId = ? AND fromDate = ? AND toDate = ? AND isActive = 1
-      ''', [currentDate, soldierID, fromDate, toDate]);
-
-      updateInVAC(soldierID, 0);
+        SET toDate = ?, isExtended = 0
+        WHERE soldierId = '$soldierID' AND isActive = 1 AND fromDate = '$fromDate' AND toDate = '$toDate'
+      ''', [currentDate]);
 
       emit(StopVacationSuccessState());
+
 
       getAllSoldiers();
       getActiveVacations();
@@ -1301,6 +1323,31 @@ class AppCubit extends Cubit<AppStates> {
       db.dispose();
     }
   }
+
+
+
+  Future<void> deleteVacation(soldierId) async {
+    emit(deleteVacationLoadingState());
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      db.execute('''
+      DELETE FROM vacations WHERE soldierId = ?
+    ''', [soldierId]);
+      emit(deleteVacationSuccessState());
+      updateInVAC(soldierId, 0);
+      updateActiveVacationFor(soldierId: soldierId, isActive: 0);
+      getVacations();
+    } catch (e) {
+      emit(deleteVacationErrorState());
+      print(e);
+    } finally {
+      db.dispose();
+    }
+  }
+
 
   List<Map<dynamic, dynamic>> missionsData = [];
 

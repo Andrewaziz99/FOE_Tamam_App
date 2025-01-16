@@ -186,6 +186,16 @@ const String allVacations = 'الكل';
 const String extendedVacations = 'الممتد';
 const String activeVacations = 'النشط';
 const String noData = 'لا توجد بيانات';
+const String stopVacation = 'إيقاف الاجازة';
+const String deleteVacation = 'حذف الاجازة';
+const String deleteAllVacation = 'حذف جميع الاجازات';
+const String editVacation = 'تعديل الاجازة';
+const String cancel = 'إلغاء';
+
+const String confirmDeleteVacation = 'هل تريد حذف الاجازة؟';
+const String confirmDeleteAllVacation = 'هل تريد حذف جميع الاجازات؟';
+
+const String deleteVacationSuccess = 'تم حذف الاجازة بنجاح';
 
 const String updateListSuccessMsg = 'تم التعديل بنجاح';
 const String editVacationSuccess = 'تم تعديل الاجازة بنجاح';

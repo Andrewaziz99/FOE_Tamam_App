@@ -31,17 +31,17 @@ class VacationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (BuildContext context) => AppCubit()..getAllNotInVAC()..getActiveVacations(),
+      create: (BuildContext context) => AppCubit()
+        ..getAllNotInVAC()
+        ..getActiveVacations(),
       child: BlocConsumer<AppCubit, AppStates>(
         listener: (BuildContext context, state) {
-
-          if (state is getActiveVacationsSuccessState) {
-
             var cubit = AppCubit.get(context);
 
+          if (state is getActiveVacationsSuccessState) {
             cubit.soldiers.clear();
 
-            for(int index = 0; index < cubit.VacData.length; index++){
+            for (int index = 0; index < cubit.VacData.length; index++) {
               cubit.AddToList(
                   index,
                   cubit.VacData[index].soldierId,
@@ -49,19 +49,15 @@ class VacationScreen extends StatelessWidget {
                   cubit.VacData[index].fromDate,
                   cubit.VacData[index].toDate,
                   cubit.VacData[index].feedback,
-                  cubit.VacData[index].rank
-              );
-
+                  cubit.VacData[index].rank,
+                  true);
 
               editFromDateController.text = cubit.VacData[index].fromDate!;
               editToDateController.text = cubit.VacData[index].toDate!;
               editFeedBackController.text = cubit.VacData[index].feedback!;
-
             }
             cubit.updateCheckedList();
-
           }
-
 
           if (state is updateListSuccess) {
             Navigator.pop(context);
@@ -89,7 +85,8 @@ class VacationScreen extends StatelessWidget {
           }
 
           if (state is makeVacationSuccess) {
-            AppCubit.get(context).soldiers.clear();
+            cubit.soldiers.clear();
+            cubit.getActiveVacations();
             CherryToast.success(
               title: const Text(makeVacationSuccessMsg),
               enableIconAnimation: true,
@@ -100,7 +97,6 @@ class VacationScreen extends StatelessWidget {
               toastDuration: const Duration(seconds: 5),
             ).show(context);
           }
-
         },
         builder: (BuildContext context, Object? state) {
           var cubit = AppCubit.get(context);
@@ -112,7 +108,6 @@ class VacationScreen extends StatelessWidget {
           //     'isChecked': false,
           //   },
           // );
-
 
           return Scaffold(
             appBar: AppBar(
@@ -323,7 +318,8 @@ class VacationScreen extends StatelessWidget {
                               fromDateController.text,
                               toDateController.text,
                               feedBackController.text,
-                              soldierData['soldierRank']);
+                              soldierData['soldierRank'],
+                              false);
                           count++;
                           cubit.updateCheckedList();
                         },
@@ -428,7 +424,7 @@ class VacationScreen extends StatelessWidget {
                                                                             DateTime.parse('2050-12-30'),
                                                                       ).then(
                                                                           (value) {
-                                                                            editFromDateController
+                                                                        editFromDateController
                                                                             .text = convertToArabic(DateFormat(
                                                                                 'yyyy/MM/dd')
                                                                             .format(value!));
@@ -454,7 +450,7 @@ class VacationScreen extends StatelessWidget {
                                                                         TextAlign
                                                                             .right,
                                                                     controller:
-                                                                    editToDateController,
+                                                                        editToDateController,
                                                                     type: TextInputType
                                                                         .datetime,
                                                                     suffix: Icons
@@ -477,7 +473,7 @@ class VacationScreen extends StatelessWidget {
                                                                             DateTime.parse('2050-12-30'),
                                                                       ).then(
                                                                           (value) {
-                                                                            editToDateController
+                                                                        editToDateController
                                                                             .text = convertToArabic(DateFormat(
                                                                                 'yyyy/MM/dd')
                                                                             .format(value!));
@@ -573,18 +569,17 @@ class VacationScreen extends StatelessWidget {
                                     Checkbox(
                                         activeColor: Colors.green,
                                         checkColor: Colors.white,
-                                        value: cubit.isChecked[index]['isChecked'],
-                                        onChanged: (val){
-                                          print(cubit.isChecked[index]['isChecked']);
+                                        value: cubit.isChecked[index]
+                                            ['isChecked'],
+                                        onChanged: (val) {
+                                          print(cubit.isChecked[index]
+                                              ['isChecked']);
                                           cubit.triggerCheckBox(val!, index);
-                                          print(cubit.isChecked[index]['isChecked']);
+                                          print(cubit.isChecked[index]
+                                              ['isChecked']);
                                           // print(val);
                                           // cubit.isChecked[index]['isChecked'] = val;
-                                        }
-                                    ),
-
-
-
+                                        }),
 
                                     const SizedBox(width: 20),
                                   ],
@@ -599,63 +594,67 @@ class VacationScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
-
-
-
-
                     const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        defaultButton(
-                            width: 400,
-                            fSize: 20.0,
-                            radius: 20.0,
-                            background: Colors.blue,
-                            tColor: Colors.white,
-                            function: () async {
-                              final checkedSoldiers = cubit.soldiers.where((s) {
-                                final index = cubit.soldiers.indexOf(s);
-                                return cubit.isChecked[index]['isChecked'];
-                              }).toList();
+                        Expanded(
+                          child: defaultButton(
+                              width: 400,
+                              fSize: 20.0,
+                              radius: 20.0,
+                              background: Colors.blue,
+                              tColor: Colors.white,
+                              function: () async {
+                                final checkedSoldiers = cubit.soldiers.where((s) {
+                                  final index = cubit.soldiers.indexOf(s);
+                                  return cubit.isChecked[index]['isChecked'];
+                                }).toList();
                                 await cubit.createVACDocFromList(checkedSoldiers);
-                            },
-                            text: printBtn3),
+                              },
+                              text: printBtn3),
+                        ),
                         const SizedBox(width: 20),
-                        defaultButton(
-                            width: 400,
-                            fSize: 20.0,
-                            background: Colors.blue,
-                            tColor: Colors.white,
-                            radius: 20.0,
-                            function: () async {
-                              final checkedSoldiers = cubit.soldiers.where((s) {
-                                final index = cubit.soldiers.indexOf(s);
-                                return cubit.isChecked[index]['isChecked'];
-                              }).toList();
+                        Expanded(
+                          child: defaultButton(
+                              width: 400,
+                              fSize: 20.0,
+                              background: Colors.blue,
+                              tColor: Colors.white,
+                              radius: 20.0,
+                              function: () async {
+                                final checkedSoldiers = cubit.soldiers.where((s) {
+                                  final index = cubit.soldiers.indexOf(s);
+                                  return cubit.isChecked[index]['isChecked'];
+                                }).toList();
                                 await cubit.createMOVDocFromList(checkedSoldiers);
-                            },
-                            text: printBtn2),
+                              },
+                              text: printBtn2),
+                        ),
                         const SizedBox(width: 20),
-                        defaultButton(
-                            width: 400,
-                            fSize: 20.0,
-                            radius: 20.0,
-                            background: Colors.green,
-                            tColor: Colors.white,
-                            function: () {
-                              for(int i = 0; i < cubit.soldiers.length; i++){
-                                cubit.makeVacation(
-                                    soldierID: cubit.soldiers[i]['soldierID'],
-                                    fromDate: cubit.soldiers[i]['fromDate'],
-                                    toDate: cubit.soldiers[i]['toDate'],
-                                    feedback: cubit.soldiers[i]['feedback'],
-                                    rank: cubit.soldiers[i]['rank'],
-                                    name: cubit.soldiers[i]['name']);
-                              }
-                            },
-                            text: save),
+                        Expanded(
+                          child: defaultButton(
+                              width: 400,
+                              fSize: 20.0,
+                              radius: 20.0,
+                              background: Colors.green,
+                              tColor: Colors.white,
+                              function: () {
+                                for (int i = 0; i < cubit.soldiers.length; i++) {
+                                  if (cubit.soldiers[i]['isSaved'] == false) {
+                                    cubit.makeVacation(
+                                        soldierID: cubit.soldiers[i]['soldierID'],
+                                        fromDate: cubit.soldiers[i]['fromDate'],
+                                        toDate: cubit.soldiers[i]['toDate'],
+                                        feedback: cubit.soldiers[i]['feedback'],
+                                        rank: cubit.soldiers[i]['rank'],
+                                        name: cubit.soldiers[i]['name']);
+                                  }
+
+                                }
+                              },
+                              text: save),
+                        ),
                       ],
                     )
                   ],

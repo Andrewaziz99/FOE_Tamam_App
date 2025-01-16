@@ -18,15 +18,31 @@ class MovesScreen extends StatelessWidget {
   TextEditingController toDateController = TextEditingController();
   TextEditingController feedBackController = TextEditingController();
 
-
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-        create: (BuildContext context) => AppCubit()..getAllSoldiers()..getVacations(),
+        create: (BuildContext context) => AppCubit()
+          ..getAllSoldiers()
+          ..getVacations(),
         child: BlocConsumer<AppCubit, AppStates>(
           listener: (BuildContext context, state) {
+            var cubit = AppCubit.get(context);
+
+            if (state is deleteVacationSuccessState) {
+              CherryToast.success(
+                textDirection: TextDirection.rtl,
+                title: const Text(deleteVacationSuccess),
+                enableIconAnimation: true,
+                animationDuration: const Duration(milliseconds: 500),
+                autoDismiss: true,
+                animationType: AnimationType.fromTop,
+                toastPosition: Position.top,
+                toastDuration: const Duration(seconds: 5),
+              ).show(context);
+            }
 
             if (state is StopVacationSuccessState) {
+              cubit.getVacations();
               CherryToast.success(
                 textDirection: TextDirection.rtl,
                 title: const Text(vacationStopped),
@@ -69,7 +85,6 @@ class MovesScreen extends StatelessWidget {
                 toastPosition: Position.top,
                 toastDuration: const Duration(seconds: 5),
               ).show(context);
-
             }
 
             if (state is genTableSuccess) {
@@ -84,7 +99,6 @@ class MovesScreen extends StatelessWidget {
                 toastDuration: const Duration(seconds: 5),
               ).show(context);
             }
-
           },
           builder: (BuildContext context, Object? state) {
             var cubit = AppCubit.get(context);
@@ -144,7 +158,7 @@ class MovesScreen extends StatelessWidget {
                         onChanged: (value) {
                           cubit.getVacationsByName(value);
                           soldierData = cubit.VacData.firstWhere(
-                                  (element) => element.name == value);
+                              (element) => element.name == value);
                         },
                         buttonStyleData: const ButtonStyleData(
                           padding: EdgeInsets.only(right: 8),
@@ -212,30 +226,40 @@ class MovesScreen extends StatelessWidget {
 
                     // List Header
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 16),
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child:  const Directionality(
+                      child: const Directionality(
                         textDirection: TextDirection.rtl,
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Expanded(
                               flex: 2,
-                              child: Text(name, style: TextStyle(fontWeight: FontWeight.bold)),
+                              child: Text(name,
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                             ),
                             Expanded(
                               flex: 2,
-                              child: Text(fromDate, style: TextStyle(fontWeight: FontWeight.bold)),
+                              child: Text(fromDate,
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                             ),
                             Expanded(
                               flex: 2,
-                              child: Text(toDate, style: TextStyle(fontWeight: FontWeight.bold)),
+                              child: Text(toDate,
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                             ),
                             Expanded(
                               flex: 3,
-                              child: Text(feedback, style: TextStyle(fontWeight: FontWeight.bold)),
+                              child: Text(feedback,
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                             ),
                           ],
                         ),
@@ -245,7 +269,8 @@ class MovesScreen extends StatelessWidget {
                     //List of soldiers
                     const SizedBox(height: 20),
                     ConditionalBuilder(
-                      condition: state is! getVacationsLoading || cubit.VacData.isEmpty,
+                      condition: state is! getVacationsLoading ||
+                          cubit.VacData.isEmpty,
                       builder: (BuildContext context) => Expanded(
                         child: SizedBox(
                           width: double.infinity,
@@ -273,7 +298,7 @@ class MovesScreen extends StatelessWidget {
                                     ],
                                   ),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Expanded(
                                         flex: 2,
@@ -291,59 +316,88 @@ class MovesScreen extends StatelessWidget {
                                         flex: 3,
                                         child: Text(vacation.feedback ?? ''),
                                       ),
-                                      if(vacation.toDate! != cubit.currentDate)
+                                      if (vacation.toDate! != cubit.currentDate)
+                                        //Extend button
                                         defaultButton(
                                             background: Colors.green,
                                             radius: 15.0,
                                             width: 50.0,
                                             fSize: 20.0,
-                                            function: (){
+                                            function: () {
                                               showModalBottomSheet(
                                                   context: context,
                                                   builder: (context) {
                                                     return Container(
                                                       width: double.infinity,
-                                                      decoration: const BoxDecoration(
+                                                      decoration:
+                                                          const BoxDecoration(
                                                         color: Colors.white,
-                                                        borderRadius: BorderRadius.only(
-                                                          topLeft: Radius.circular(20.0),
-                                                          topRight: Radius.circular(20.0),
+                                                        borderRadius:
+                                                            BorderRadius.only(
+                                                          topLeft:
+                                                              Radius.circular(
+                                                                  20.0),
+                                                          topRight:
+                                                              Radius.circular(
+                                                                  20.0),
                                                         ),
                                                       ),
                                                       // color: Colors.white,
                                                       child: Padding(
-                                                        padding: const EdgeInsets.all(20.0),
-                                                        child: SingleChildScrollView(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(20.0),
+                                                        child:
+                                                            SingleChildScrollView(
                                                           child: Column(
                                                             crossAxisAlignment:
-                                                            CrossAxisAlignment.end,
+                                                                CrossAxisAlignment
+                                                                    .end,
                                                             children: [
-                                                              const SizedBox(height: 20),
+                                                              const SizedBox(
+                                                                  height: 20),
                                                               newFormField(
-                                                                  controller: extendController,
-                                                                  type: TextInputType.text,
-                                                                  label: duration,
-                                                                  validate: (val){}
-                                                              ),
-
-                                                              const SizedBox(height: 30),
-
+                                                                  controller:
+                                                                      extendController,
+                                                                  type:
+                                                                      TextInputType
+                                                                          .text,
+                                                                  label:
+                                                                      duration,
+                                                                  validate:
+                                                                      (val) {
+                                                                    if (val!
+                                                                        .isEmpty) {
+                                                                      return 'Please enter the number of days';
+                                                                    }
+                                                                    return null;
+                                                                  }),
+                                                              const SizedBox(
+                                                                  height: 30),
                                                               defaultButton(
-                                                                  background: Colors.green,
+                                                                  background:
+                                                                      Colors
+                                                                          .green,
                                                                   radius: 15.0,
                                                                   width: 150.0,
                                                                   fSize: 20.0,
-                                                                  function: (){
-                                                                    // print(vacation.toDate);
-                                                                    cubit.extendVacation(
-                                                                      soldierID: vacation.soldierId,
-                                                                      fromDate: vacation.fromDate,
-                                                                      toDate: vacation.toDate,
-                                                                      extend: extendController.text,
+                                                                  function: () {
+                                                                    cubit
+                                                                        .extendVacation(
+                                                                      soldierID:
+                                                                          vacation
+                                                                              .soldierId,
+                                                                      fromDate:
+                                                                          vacation
+                                                                              .fromDate,
+                                                                      toDate: vacation
+                                                                          .toDate,
+                                                                      extend: extendController
+                                                                          .text,
                                                                     );
                                                                   },
-                                                                  text: extendBtn
-                                                              ),
+                                                                  text:
+                                                                      extendBtn),
                                                             ],
                                                           ),
                                                         ),
@@ -351,115 +405,215 @@ class MovesScreen extends StatelessWidget {
                                                     );
                                                   });
                                             },
-                                            text: extendBtn
-                                        ),
-                                      IconButton(
-                                          onPressed: (){
-                                            fromDateController.text = vacation.fromDate!;
-                                            toDateController.text = vacation.toDate!;
-                                            feedBackController.text = vacation.feedback!;
-                                            showModalBottomSheet(
-                                                context: context,
-                                                builder: (context) {
-                                                  return Container(
-                                                    width: double.infinity,
-                                                    decoration: const BoxDecoration(
-                                                      color: Colors.white,
-                                                      borderRadius: BorderRadius.only(
-                                                        topLeft: Radius.circular(20.0),
-                                                        topRight: Radius.circular(20.0),
-                                                      ),
-                                                    ),
-                                                    // color: Colors.white,
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.all(20.0),
-                                                      child: SingleChildScrollView(
-                                                        child: Column(
-                                                          crossAxisAlignment:
-                                                          CrossAxisAlignment.end,
-                                                          children: [
-                                                            const SizedBox(height: 20),
-                                                            newFormField(controller: fromDateController,
-                                                                type: TextInputType.text,
-                                                                label: fromDate,
-                                                                validate: (val){
-                                                                  if(val!.isEmpty){
-                                                                    return 'Please enter the number of days';
-                                                                  }
-                                                                  return null;
-                                                                }
-                                                            ),
-                                                            const SizedBox(height: 20),
-                                                            newFormField(controller: toDateController,
-                                                                type: TextInputType.text,
-                                                                label: toDate,
-                                                                validate: (val){
-                                                                  if(val!.isEmpty){
-                                                                    return 'Please enter the number of days';
-                                                                  }
-                                                                  return null;
-                                                                }
-                                                            ),
-
-                                                            const SizedBox(height: 20),
-                                                            newFormField(controller: feedBackController,
-                                                                type: TextInputType.text,
-                                                                label: feedback,
-                                                                validate: (val){
-                                                                  if(val!.isEmpty){
-                                                                    return 'Please enter the number of days';
-                                                                  }
-                                                                  return null;
-                                                                }
-                                                            ),
-
-                                                            const SizedBox(height: 30),
-
-
-
-                                                            defaultButton(
-                                                                background: Colors.blue,
-                                                                radius: 15.0,
-                                                                width: 150.0,
-                                                                fSize: 20.0,
-                                                                tColor: Colors.white,
-                                                                function: (){
-                                                                  cubit.updateVacation(
-                                                                    soldierID: vacation.soldierId,
-                                                                    oldFromDate: vacation.fromDate,
-                                                                    oldToDate: vacation.toDate,
-                                                                    oldFeedback: vacation.feedback,
-                                                                    newFromDate: fromDateController.text,
-                                                                    newToDate: toDateController.text,
-                                                                    newFeedback: feedBackController.text,
-
-                                                                  );
-                                                                },
-                                                                text: edit
-                                                            ),
-                                                          ],
+                                            text: extendBtn),
+                                      if (vacation.toDate! != cubit.currentDate)
+                                        //Edit Button
+                                        IconButton(
+                                            onPressed: () {
+                                              fromDateController.text =
+                                                  vacation.fromDate!;
+                                              toDateController.text =
+                                                  vacation.toDate!;
+                                              feedBackController.text =
+                                                  vacation.feedback!;
+                                              showModalBottomSheet(
+                                                  context: context,
+                                                  builder: (context) {
+                                                    return Container(
+                                                      width: double.infinity,
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                        color: Colors.white,
+                                                        borderRadius:
+                                                            BorderRadius.only(
+                                                          topLeft:
+                                                              Radius.circular(
+                                                                  20.0),
+                                                          topRight:
+                                                              Radius.circular(
+                                                                  20.0),
                                                         ),
                                                       ),
-                                                    ),
-                                                  );
-                                                });
-
-                                          },
-                                          icon: const Icon(Icons.edit, color: Colors.blue)
-                                      ),
-                                      if(vacation.toDate! != cubit.currentDate)
-                                        IconButton(
-                                            onPressed: (){
-                                              cubit.stopVacation(soldierID: vacation.soldierId, fromDate: vacation.fromDate, toDate: vacation.toDate);
+                                                      // color: Colors.white,
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(20.0),
+                                                        child:
+                                                            SingleChildScrollView(
+                                                          child: Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .end,
+                                                            children: [
+                                                              const SizedBox(
+                                                                  height: 20),
+                                                              newFormField(
+                                                                  controller:
+                                                                      fromDateController,
+                                                                  type:
+                                                                      TextInputType
+                                                                          .text,
+                                                                  label:
+                                                                      fromDate,
+                                                                  validate:
+                                                                      (val) {
+                                                                    if (val!
+                                                                        .isEmpty) {
+                                                                      return 'Please enter the number of days';
+                                                                    }
+                                                                    return null;
+                                                                  }),
+                                                              const SizedBox(
+                                                                  height: 20),
+                                                              newFormField(
+                                                                  controller:
+                                                                      toDateController,
+                                                                  type:
+                                                                      TextInputType
+                                                                          .text,
+                                                                  label: toDate,
+                                                                  validate:
+                                                                      (val) {
+                                                                    if (val!
+                                                                        .isEmpty) {
+                                                                      return 'Please enter the number of days';
+                                                                    }
+                                                                    return null;
+                                                                  }),
+                                                              const SizedBox(
+                                                                  height: 20),
+                                                              newFormField(
+                                                                  controller:
+                                                                      feedBackController,
+                                                                  type:
+                                                                      TextInputType
+                                                                          .text,
+                                                                  label:
+                                                                      feedback,
+                                                                  validate:
+                                                                      (val) {
+                                                                    if (val!
+                                                                        .isEmpty) {
+                                                                      return 'Please enter the number of days';
+                                                                    }
+                                                                    return null;
+                                                                  }),
+                                                              const SizedBox(
+                                                                  height: 30),
+                                                              defaultButton(
+                                                                  background:
+                                                                      Colors
+                                                                          .blue,
+                                                                  radius: 15.0,
+                                                                  width: 150.0,
+                                                                  fSize: 20.0,
+                                                                  tColor: Colors
+                                                                      .white,
+                                                                  function: () {
+                                                                    cubit
+                                                                        .updateVacation(
+                                                                      soldierID:
+                                                                          vacation
+                                                                              .soldierId,
+                                                                      oldFromDate:
+                                                                          vacation
+                                                                              .fromDate,
+                                                                      oldToDate:
+                                                                          vacation
+                                                                              .toDate,
+                                                                      oldFeedback:
+                                                                          vacation
+                                                                              .feedback,
+                                                                      newFromDate:
+                                                                          fromDateController
+                                                                              .text,
+                                                                      newToDate:
+                                                                          toDateController
+                                                                              .text,
+                                                                      newFeedback:
+                                                                          feedBackController
+                                                                              .text,
+                                                                    );
+                                                                  },
+                                                                  text: edit),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  });
                                             },
-                                            icon: const Icon(Icons.delete, color: Colors.red)
+                                            icon: const Icon(Icons.edit,
+                                                color: Colors.blue), tooltip: editVacation,),
+                                      if (vacation.toDate! != cubit.currentDate)
+                                        //Stop Button
+                                        IconButton(
+                                            onPressed: () {
+                                              cubit.stopVacation(
+                                                  soldierID: vacation.soldierId,
+                                                  fromDate: vacation.fromDate,
+                                                  toDate: vacation.toDate);
+                                            },
+                                            icon: const Icon(
+                                                Icons.pause,
+                                                color: Colors.amberAccent),
+                                          tooltip: stopVacation,
                                         ),
+                                      //Delete Button
+                                      IconButton(
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                alignment: Alignment.center,
+                                                elevation: 8.0,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(15),
+                                                ),
+                                                title: const Text(confirmDeleteVacation, textDirection: TextDirection.rtl,),
+                                                titleTextStyle: const TextStyle(
+                                                  color: Colors.red,
+                                                  fontSize: 20.0,
+                                                ),
+                                                actionsAlignment: MainAxisAlignment.center,
+                                                actions: [
+                                                  defaultButton(
+                                                    radius: 20.0,
+                                                      fSize: 20.0,
+                                                      tColor: Colors.white,
+                                                      background: Colors.redAccent,
+                                                      function: (){
+                                                        cubit.deleteVacation(vacation.soldierId);
+                                                        Navigator.pop(context);
+                                                      }, text: delete),
+                                                  const SizedBox(height: 15.0),
+                                                  defaultButton(
+                                                      radius: 20.0,
+                                                      fSize: 20.0,
+                                                      tColor: Colors.white,
+                                                      background: Colors.greenAccent,
+                                                      function: (){
+                                                        Navigator.pop(context);
+                                                      }, text: cancel),
+                                                ],
+                                              ),
+                                            );
+                                            // cubit.deleteVacation(vacation.soldierId);
+                                          },
+                                          icon: const Icon(
+                                              Icons.delete,
+                                              color: Colors.red),
+                                        tooltip: deleteVacation,
+                                      ),
                                     ],
                                   ),
                                 );
                               },
-                              separatorBuilder: (BuildContext context, int index) =>
-                                  myDivider(),
+                              separatorBuilder:
+                                  (BuildContext context, int index) =>
+                                      myDivider(),
                             ),
                           ),
                         ),
@@ -472,7 +626,7 @@ class MovesScreen extends StatelessWidget {
                       fSize: 20.0,
                       background: Colors.green,
                       tColor: Colors.white,
-                      function: (){
+                      function: () {
                         cubit.createExtendDoc(cubit.VacData);
                       },
                       text: printExtend,
