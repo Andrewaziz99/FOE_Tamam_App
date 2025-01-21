@@ -18,6 +18,8 @@ class MovesScreen extends StatelessWidget {
   TextEditingController toDateController = TextEditingController();
   TextEditingController feedBackController = TextEditingController();
 
+  MovesScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -316,7 +318,7 @@ class MovesScreen extends StatelessWidget {
                                         flex: 3,
                                         child: Text(vacation.feedback ?? ''),
                                       ),
-                                      if (vacation.toDate! != cubit.currentDate)
+                                      if (cubit.difference < 0)
                                         //Extend button
                                         defaultButton(
                                             background: Colors.green,
@@ -406,7 +408,7 @@ class MovesScreen extends StatelessWidget {
                                                   });
                                             },
                                             text: extendBtn),
-                                      if (vacation.toDate! != cubit.currentDate)
+                                      if (cubit.difference < 0)
                                         //Edit Button
                                         IconButton(
                                             onPressed: () {
@@ -546,14 +548,16 @@ class MovesScreen extends StatelessWidget {
                                             },
                                             icon: const Icon(Icons.edit,
                                                 color: Colors.blue), tooltip: editVacation,),
-                                      if (vacation.toDate! != cubit.currentDate)
+                                      if (cubit.difference < 0)
                                         //Stop Button
                                         IconButton(
                                             onPressed: () {
-                                              cubit.stopVacation(
-                                                  soldierID: vacation.soldierId,
-                                                  fromDate: vacation.fromDate,
-                                                  toDate: vacation.toDate);
+                                              cubit.calculateDifference(soldierId: vacation.soldierId, toDate: vacation.fromDate);
+                                              if (cubit.difference < 0 ) {
+                                              cubit.deleteVacation(vacation.soldierId, vacation.fromDate, vacation.toDate);
+                                              }  else {
+                                                cubit.stopVacation(soldierID: vacation.soldierId, fromDate: vacation.fromDate, toDate: vacation.toDate);
+                                              }
                                             },
                                             icon: const Icon(
                                                 Icons.pause,
@@ -585,7 +589,7 @@ class MovesScreen extends StatelessWidget {
                                                       tColor: Colors.white,
                                                       background: Colors.redAccent,
                                                       function: (){
-                                                        cubit.deleteVacation(vacation.soldierId);
+                                                        cubit.deleteVacation(vacation.soldierId, vacation.fromDate, vacation.toDate);
                                                         Navigator.pop(context);
                                                       }, text: delete),
                                                   const SizedBox(height: 15.0),

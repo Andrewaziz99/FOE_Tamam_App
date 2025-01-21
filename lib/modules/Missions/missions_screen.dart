@@ -14,6 +14,8 @@ class MissionsScreen extends StatelessWidget {
   TextEditingController funcController1 = TextEditingController();
   TextEditingController funcController2 = TextEditingController();
 
+  MissionsScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
