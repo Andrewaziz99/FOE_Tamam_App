@@ -151,4 +151,32 @@ class deleteVacationSuccessState extends AppStates {}
 
 class deleteVacationErrorState extends AppStates {}
 
+class calculateDifferenceLoadingState extends AppStates {}
 
+class calculateDifferenceSuccessState extends AppStates {}
+
+class calculateDifferenceErrorState extends AppStates {}
+
+class getLastVacationForLoadingState extends AppStates {}
+
+class getLastVacationForSuccessState extends AppStates {}
+
+class getLastVacationForErrorState extends AppStates {}
+
+class pickSoldierIdImageLoading extends AppStates {}
+
+class pickSoldierIdImageSuccess extends AppStates {}
+
+class pickSoldierIdImageError extends AppStates {}
+
+class pickSoldierNationalIdImageLoading extends AppStates {}
+
+class pickSoldierNationalIdImageSuccess extends AppStates {}
+
+class pickSoldierNationalIdImageError extends AppStates {}
+
+class updateSoldierImageLoading extends AppStates {}
+
+class updateSoldierImageSuccess extends AppStates {}
+
+class updateSoldierImageError extends AppStates {}

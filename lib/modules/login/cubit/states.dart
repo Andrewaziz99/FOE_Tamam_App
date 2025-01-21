@@ -33,4 +33,10 @@ class RegisterErrorState extends LoginStates {
   RegisterErrorState(this.error);
 }
 
+class changePasswordLoadingState extends LoginStates {}
+
+class changePasswordSuccessState extends LoginStates {}
+
+class changePasswordErrorState extends LoginStates {}
+
 
