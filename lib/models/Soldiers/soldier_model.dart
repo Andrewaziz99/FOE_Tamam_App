@@ -1,4 +1,5 @@
 class SoldierModel {
+  String? id;
   String? soldierImage;
   String? soldierName;
   String? soldierRank;
@@ -23,10 +24,13 @@ class SoldierModel {
   String? soldierGrade;
   String? soldierNumOfSiblings;
   String? soldierFunction;
+  String? soldierIdImage;
+  String? soldierNationalIdImage;
   int? isOUT = 0;
   int? inVAC = 0;
 
   SoldierModel(
+      this.id,
       this.soldierImage,
       this.soldierName,
       this.soldierRank,
@@ -51,11 +55,14 @@ class SoldierModel {
       this.soldierGrade,
       this.soldierNumOfSiblings,
       this.soldierFunction,
+      this.soldierIdImage,
+      this.soldierNationalIdImage,
       this.isOUT,
       this.inVAC
       );
 
   SoldierModel.fromJson(Map<dynamic, dynamic> json) {
+    id = json['id'].toString();
     soldierImage = json['soldierImage'];
     soldierName = json['soldierName'];
     soldierRank = json['soldierRank'];
@@ -80,12 +87,15 @@ class SoldierModel {
     soldierGrade = json['soldierGrade'];
     soldierNumOfSiblings = json['soldierNumOfSiblings'];
     soldierFunction = json['soldierFunction'];
+    soldierIdImage = json['soldierIdImage'];
+    soldierNationalIdImage = json['soldierNationalIdImage'];
     isOUT = json['isOUT'];
     inVAC = json['inVAC'];
   }
 
   Map<String, dynamic> toMap() {
     return {
+      'id': id.toString(),
       'soldierImage': soldierImage,
       'soldierName': soldierName,
       'soldierRank': soldierRank,
@@ -110,6 +120,8 @@ class SoldierModel {
       'soldierGrade': soldierGrade,
       'soldierNumOfSiblings': soldierNumOfSiblings,
       'soldierFunction': soldierFunction,
+      'soldierIdImage': soldierIdImage,
+      'soldierNationalIdImage': soldierNationalIdImage,
       'isOUT': isOUT,
       'inVAC': inVAC,
     };
