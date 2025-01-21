@@ -30,6 +30,8 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+/db/
+/assets/db/
 
 # Symbolication related
 app.*.symbols
