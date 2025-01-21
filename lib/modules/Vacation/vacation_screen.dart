@@ -5,6 +5,7 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:tamam/models/Vacations/vacation_model.dart';
 import 'package:tamam/shared/cubit/cubit.dart';
 import 'package:tamam/shared/cubit/states.dart';
 
@@ -26,6 +27,8 @@ class VacationScreen extends StatelessWidget {
 
   int count = 0;
 
+  final differenceController = TextEditingController();
+
   VacationScreen({super.key});
 
   @override
@@ -36,25 +39,31 @@ class VacationScreen extends StatelessWidget {
         ..getActiveVacations(),
       child: BlocConsumer<AppCubit, AppStates>(
         listener: (BuildContext context, state) {
-            var cubit = AppCubit.get(context);
+          var cubit = AppCubit.get(context);
 
           if (state is getActiveVacationsSuccessState) {
             cubit.soldiers.clear();
+            cubit.difference = 0;
 
-            for (int index = 0; index < cubit.VacData.length; index++) {
+            for (int index = 0;
+                index < cubit.activeVacationData.length;
+                index++) {
               cubit.AddToList(
                   index,
-                  cubit.VacData[index].soldierId,
-                  cubit.VacData[index].name,
-                  cubit.VacData[index].fromDate,
-                  cubit.VacData[index].toDate,
-                  cubit.VacData[index].feedback,
-                  cubit.VacData[index].rank,
+                  cubit.activeVacationData[index].soldierId,
+                  cubit.activeVacationData[index].name,
+                  cubit.activeVacationData[index].fromDate,
+                  cubit.activeVacationData[index].toDate,
+                  cubit.activeVacationData[index].feedback,
+                  cubit.activeVacationData[index].rank,
                   true);
 
-              editFromDateController.text = cubit.VacData[index].fromDate!;
-              editToDateController.text = cubit.VacData[index].toDate!;
-              editFeedBackController.text = cubit.VacData[index].feedback!;
+              editFromDateController.text =
+                  cubit.activeVacationData[index].fromDate!;
+              editToDateController.text =
+                  cubit.activeVacationData[index].toDate!;
+              editFeedBackController.text =
+                  cubit.activeVacationData[index].feedback!;
             }
             cubit.updateCheckedList();
           }
@@ -86,6 +95,7 @@ class VacationScreen extends StatelessWidget {
 
           if (state is makeVacationSuccess) {
             cubit.soldiers.clear();
+            cubit.difference = 0;
             cubit.getActiveVacations();
             CherryToast.success(
               title: const Text(makeVacationSuccessMsg),
@@ -100,15 +110,6 @@ class VacationScreen extends StatelessWidget {
         },
         builder: (BuildContext context, Object? state) {
           var cubit = AppCubit.get(context);
-
-          // final List<Map<String, dynamic>> isChecked = List.generate(
-          //   cubit.soldiers.length,
-          //       (index) => {
-          //     'id': index,
-          //     'isChecked': false,
-          //   },
-          // );
-
           return Scaffold(
             appBar: AppBar(
               elevation: 0.5,
@@ -139,7 +140,24 @@ class VacationScreen extends StatelessWidget {
                             },
                           ),
                         ),
-                        const SizedBox(width: 10), // Space between fields
+                        const SizedBox(width: 10),
+
+                        //Text Field for difference between last vacation and now
+                        // Text(convertToArabic(cubit.difference.toString()), style: const TextStyle(color: Colors.green, fontSize: 20.0),),
+                        SizedBox(
+                          width: 250,
+                          child: defaultFormField(
+                            controller: differenceController,
+                            type: TextInputType.text,
+                            label: durationFromLastVacation,
+                            labelColor: Colors.black,
+                            textColor: Colors.green,
+                            textSize: 25.0,
+                            validate: (val) {},
+                            isClickable: false,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
 
                         // Dropdown for Name
                         Flexible(
@@ -183,12 +201,29 @@ class VacationScreen extends StatelessWidget {
                               }
                               return null;
                             },
-                            onChanged: (value) {
+                            onChanged: (value) async {
+                              cubit.lastVacation = null;
                               cubit.changeSelectedValue(value!);
                               soldierData = cubit.soldierNotInVAC
                                   .firstWhere(
                                       (element) => element.soldierName == value)
                                   .toMap();
+
+                              await cubit.getLastVacationFor(soldierName: value);
+
+                              if (cubit.lastVacation == null) {
+                                differenceController.text = convertToArabic('0');
+
+                              }  else {
+
+                                cubit.calculateDifference(
+                                    soldierId: soldierData['soldierId'],
+                                    toDate: cubit.lastVacation!.toDate);
+                                differenceController.text =
+                                    convertToArabic(cubit.difference.toString());
+                              }
+
+
                             },
                             buttonStyleData: const ButtonStyleData(
                               padding: EdgeInsets.only(right: 8),
@@ -235,14 +270,14 @@ class VacationScreen extends StatelessWidget {
                               ).then((value) {
                                 toDateController.text = convertToArabic(
                                     DateFormat('yyyy/MM/dd').format(value!));
-                                DateTime from_date = DateTime.parse(
+                                DateTime fromDate = DateTime.parse(
                                     convertArabicToEnglish(
                                         fromDateController.text));
-                                DateTime to_date = DateTime.parse(
+                                DateTime toDate = DateTime.parse(
                                     convertArabicToEnglish(
                                         toDateController.text));
                                 daysController.text = convertToArabic(
-                                    (to_date.difference(from_date).inDays)
+                                    (toDate.difference(fromDate).inDays)
                                         .toString());
                               });
                             },
@@ -301,7 +336,9 @@ class VacationScreen extends StatelessWidget {
                         controller: feedBackController,
                         type: TextInputType.text,
                         label: feedback,
-                        validate: (val) {}),
+                        validate: (val) {
+                          return null;
+                        }),
                     const SizedBox(
                       height: 20.0,
                     ),
@@ -324,6 +361,21 @@ class VacationScreen extends StatelessWidget {
                           cubit.updateCheckedList();
                         },
                         text: add),
+                    const SizedBox(height: 20),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Spacer(),
+                        Text(feedback),
+                        Spacer(),
+                        Text(toDate),
+                        Spacer(),
+                        Text(fromDate),
+                        Spacer(),
+                        Text(name),
+                        SizedBox(width: 30.0),
+                      ],
+                    ),
                     const SizedBox(height: 20),
                     Container(
                       height: MediaQuery.of(context).size.height * 0.5,
@@ -564,7 +616,7 @@ class VacationScreen extends StatelessWidget {
                                     //Soldier Name
                                     Text(cubit.soldiers[index]['name']),
 
-                                    const Spacer(),
+                                    const SizedBox(width: 20.0),
                                     //CheckBox
                                     Checkbox(
                                         activeColor: Colors.green,
@@ -572,13 +624,7 @@ class VacationScreen extends StatelessWidget {
                                         value: cubit.isChecked[index]
                                             ['isChecked'],
                                         onChanged: (val) {
-                                          print(cubit.isChecked[index]
-                                              ['isChecked']);
                                           cubit.triggerCheckBox(val!, index);
-                                          print(cubit.isChecked[index]
-                                              ['isChecked']);
-                                          // print(val);
-                                          // cubit.isChecked[index]['isChecked'] = val;
                                         }),
 
                                     const SizedBox(width: 20),
@@ -606,11 +652,13 @@ class VacationScreen extends StatelessWidget {
                               background: Colors.blue,
                               tColor: Colors.white,
                               function: () async {
-                                final checkedSoldiers = cubit.soldiers.where((s) {
+                                final checkedSoldiers =
+                                    cubit.soldiers.where((s) {
                                   final index = cubit.soldiers.indexOf(s);
                                   return cubit.isChecked[index]['isChecked'];
                                 }).toList();
-                                await cubit.createVACDocFromList(checkedSoldiers);
+                                await cubit
+                                    .createVACDocFromList(checkedSoldiers);
                               },
                               text: printBtn3),
                         ),
@@ -623,11 +671,13 @@ class VacationScreen extends StatelessWidget {
                               tColor: Colors.white,
                               radius: 20.0,
                               function: () async {
-                                final checkedSoldiers = cubit.soldiers.where((s) {
+                                final checkedSoldiers =
+                                    cubit.soldiers.where((s) {
                                   final index = cubit.soldiers.indexOf(s);
                                   return cubit.isChecked[index]['isChecked'];
                                 }).toList();
-                                await cubit.createMOVDocFromList(checkedSoldiers);
+                                await cubit
+                                    .createMOVDocFromList(checkedSoldiers);
                               },
                               text: printBtn2),
                         ),
@@ -640,17 +690,19 @@ class VacationScreen extends StatelessWidget {
                               background: Colors.green,
                               tColor: Colors.white,
                               function: () {
-                                for (int i = 0; i < cubit.soldiers.length; i++) {
+                                for (int i = 0;
+                                    i < cubit.soldiers.length;
+                                    i++) {
                                   if (cubit.soldiers[i]['isSaved'] == false) {
                                     cubit.makeVacation(
-                                        soldierID: cubit.soldiers[i]['soldierID'],
+                                        soldierID: cubit.soldiers[i]
+                                            ['soldierID'],
                                         fromDate: cubit.soldiers[i]['fromDate'],
                                         toDate: cubit.soldiers[i]['toDate'],
                                         feedback: cubit.soldiers[i]['feedback'],
                                         rank: cubit.soldiers[i]['rank'],
                                         name: cubit.soldiers[i]['name']);
                                   }
-
                                 }
                               },
                               text: save),

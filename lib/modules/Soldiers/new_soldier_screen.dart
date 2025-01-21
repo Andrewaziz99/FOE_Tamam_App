@@ -1,8 +1,13 @@
+import 'dart:io';
+
+import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:octo_image/octo_image.dart';
 
 import 'package:tamam/shared/components/constants.dart';
+import 'package:tamam/shared/cubit/states.dart';
 
 import '../../shared/components/components.dart';
 
@@ -29,7 +34,9 @@ TextEditingController num_of_siblingsController = TextEditingController();
 TextEditingController skillsController = TextEditingController();
 TextEditingController functionController = TextEditingController();
 TextEditingController joinDateController = TextEditingController();
-
+TextEditingController soldierIdImageController = TextEditingController();
+TextEditingController soldierNationalIdImageController =
+    TextEditingController();
 
 Widget addSoldier(cubit, context, submitBtn) => SingleChildScrollView(
       child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -178,7 +185,8 @@ Widget addSoldier(cubit, context, submitBtn) => SingleChildScrollView(
                 firstDate: DateTime(1900),
                 lastDate: DateTime.parse('2050-12-30'),
               ).then((value) {
-                birthDateController.text = convertToArabic(DateFormat('yyyy/MM/dd').format(value!));
+                birthDateController.text =
+                    convertToArabic(DateFormat('yyyy/MM/dd').format(value!));
               });
             },
             label: bDate,
@@ -275,7 +283,8 @@ Widget addSoldier(cubit, context, submitBtn) => SingleChildScrollView(
                 firstDate: DateTime(1900),
                 lastDate: DateTime.parse('2050-12-30'),
               ).then((value) {
-                retiringDateController.text = convertToArabic(DateFormat('yyyy/MM/dd').format(value!));
+                retiringDateController.text =
+                    convertToArabic(DateFormat('yyyy/MM/dd').format(value!));
               });
             },
             validate: (value) {
@@ -441,7 +450,8 @@ Widget addSoldier(cubit, context, submitBtn) => SingleChildScrollView(
                 firstDate: DateTime(1970),
                 lastDate: DateTime.parse('2050-12-30'),
               ).then((value) {
-                joinDateController.text = convertToArabic(DateFormat('yyyy/MM/dd').format(value!));
+                joinDateController.text =
+                    convertToArabic(DateFormat('yyyy/MM/dd').format(value!));
               });
             },
             validate: (value) {
@@ -451,6 +461,44 @@ Widget addSoldier(cubit, context, submitBtn) => SingleChildScrollView(
               return null;
             }),
         const SizedBox(height: 20),
+
+
+        const Text(soldierIdImage),
+        const SizedBox(height: 20),
+        ConditionalBuilder(
+            condition: cubit.state is! pickSoldierIdImageSuccess,
+            builder: (BuildContext context) =>  Center(
+                child: IconButton(
+                  icon: const Icon(Icons.broken_image_rounded,
+                      size: 100, color: Colors.redAccent),
+                  onPressed: () {
+                    cubit.pickSoldierIdImage();
+                  },
+                )),
+            fallback: (BuildContext context) => OctoImage(
+                image: FileImage(File(soldierIdImageController.text)))),
+        const SizedBox(height: 20),
+
+
+
+        const Text(soldierNationalIdImage),
+        const SizedBox(height: 20),
+        ConditionalBuilder(
+            condition: cubit.state is! pickSoldierNationalIdImageSuccess,
+            builder: (BuildContext context) => Center(
+                child: IconButton(
+                  icon: const Icon(Icons.broken_image_rounded,
+                      size: 100, color: Colors.redAccent),
+                  onPressed: () {
+                    cubit.pickSoldierNationalIdImage();
+                  },
+                )),
+            fallback: (BuildContext context) => OctoImage(
+                image: FileImage(File(soldierNationalIdImageController.text)))),
+
+
+
+        const SizedBox(height: 30),
         defaultButton(
           function: () {
             cubit.enterNewSoldier(

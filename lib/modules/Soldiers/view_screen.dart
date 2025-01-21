@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:cherry_toast/cherry_toast.dart';
+import 'package:cherry_toast/resources/arrays.dart';
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,11 +10,14 @@ import 'package:tamam/shared/components/components.dart';
 import 'package:tamam/shared/components/constants.dart';
 import 'package:tamam/shared/cubit/cubit.dart';
 import 'package:tamam/shared/cubit/states.dart';
+import 'package:tamam/shared/network/local/cache_helper.dart';
 
 import 'new_soldier_screen.dart';
 
 class ViewScreen extends StatelessWidget {
   ViewScreen({super.key});
+
+  final imagesPath = CacheHelper.getData(key: 'images_folder');
 
   TextEditingController editRankController = TextEditingController();
   TextEditingController editNameController = TextEditingController();
@@ -37,6 +42,8 @@ class ViewScreen extends StatelessWidget {
   TextEditingController editSkillsController = TextEditingController();
   TextEditingController editFunctionController = TextEditingController();
   TextEditingController editJoinDateController = TextEditingController();
+  TextEditingController editSoldierIdImageController = TextEditingController();
+  TextEditingController editSoldierNationalIdImageController = TextEditingController();
 
 
 
@@ -73,6 +80,136 @@ class ViewScreen extends StatelessWidget {
               editSkillsController.text = cubit.soldierModel!.soldierSkills!;
               editFunctionController.text = cubit.soldierModel!.soldierFunction!;
               editJoinDateController.text = cubit.soldierModel!.soldierJoinDate!;
+              editSoldierIdImageController.text = cubit.soldierModel!.soldierIdImage!;
+              editSoldierNationalIdImageController.text = cubit.soldierModel!.soldierNationalIdImage!;
+            }
+
+            if (state is enterNewSoldierError) {
+              CherryToast.error(
+                animationType: AnimationType.fromTop,
+                enableIconAnimation: true,
+                animationCurve: Curves.easeInOutQuint,
+                displayIcon: true,
+                toastDuration: const Duration(seconds: 5),
+                displayCloseButton: true,
+                autoDismiss: true,
+                toastPosition: Position.top,
+                title: const Text(soldierAddError),
+              ).show(context);
+            }
+
+            if (state is enterNewSoldierSuccess) {
+              cubit.getAllSoldiers();
+              cubit.savedImagePath = '';
+              imageController.clear();
+              nameController.clear();
+              rankController.clear();
+              phoneController.clear();
+              addPhoneController.clear();
+              birthDateController.clear();
+              cityController.clear();
+              nationalIDController.clear();
+              soldierIDController.clear();
+              retiringDateController.clear();
+              facultyController.clear();
+              specController.clear();
+              gradeController.clear();
+              homeAddressController.clear();
+              home_numController.clear();
+              father_jobController.clear();
+              mother_jobController.clear();
+              father_phoneController.clear();
+              mother_phoneController.clear();
+              num_of_siblingsController.clear();
+              skillsController.clear();
+              functionController.clear();
+              joinDateController.clear();
+              Navigator.pop(context);
+
+              CherryToast.success(
+                animationType: AnimationType.fromTop,
+                enableIconAnimation: true,
+                animationCurve: Curves.easeInOutQuint,
+                displayIcon: true,
+                toastDuration: const Duration(seconds: 5),
+                displayCloseButton: true,
+                autoDismiss: true,
+                toastPosition: Position.top,
+                title: const Text(soldierAddSuccess),
+              ).show(context);
+            }
+
+            if (state is pickImageSuccess) {
+              CherryToast.success(
+                animationType: AnimationType.fromTop,
+                enableIconAnimation: true,
+                animationCurve: Curves.easeInOutQuint,
+                displayIcon: true,
+                toastDuration: const Duration(seconds: 5),
+                displayCloseButton: true,
+                autoDismiss: true,
+                toastPosition: Position.top,
+                title: const Text(imagePickSuccess),
+              ).show(context);
+            }
+
+            if (state is pickImageError) {
+              CherryToast.error(
+                animationType: AnimationType.fromTop,
+                enableIconAnimation: true,
+                animationCurve: Curves.easeInOutQuint,
+                displayIcon: true,
+                toastDuration: const Duration(seconds: 5),
+                displayCloseButton: true,
+                autoDismiss: true,
+                toastPosition: Position.top,
+                title: const Text(imagePickError),
+              ).show(context);
+            }
+
+            if (state is updateSoldierSuccess){
+              cubit.getAllSoldiers();
+              CherryToast.success(
+                animationType: AnimationType.fromTop,
+                enableIconAnimation: true,
+                animationCurve: Curves.easeInOutQuint,
+                displayIcon: true,
+                toastDuration: const Duration(seconds: 5),
+                displayCloseButton: true,
+                autoDismiss: true,
+                toastPosition: Position.top,
+                title: const Text(soldierEditSuccess),
+              ).show(context);
+            }
+
+            if (state is pickSoldierIdImageSuccess) {
+              editSoldierIdImageController.text = cubit.savedSoldierIdImagePath;
+              CherryToast.success(
+                animationType: AnimationType.fromTop,
+                enableIconAnimation: true,
+                animationCurve: Curves.easeInOutQuint,
+                displayIcon: true,
+                toastDuration: const Duration(seconds: 5),
+                displayCloseButton: true,
+                autoDismiss: true,
+                toastPosition: Position.top,
+                title: const Text(imagePickSuccess),
+              ).show(context);
+            }
+
+            if (state is pickSoldierNationalIdImageSuccess) {
+              editSoldierNationalIdImageController.text = cubit.savedSoldierNationalIdImagePath;
+              CherryToast.success(
+                animationType: AnimationType.fromTop,
+                enableIconAnimation: true,
+                animationCurve: Curves.easeInOutQuint,
+                displayIcon: true,
+                toastDuration: const Duration(seconds: 5),
+                displayCloseButton: true,
+                autoDismiss: true,
+                toastPosition: Position.top,
+                title: const Text(imagePickSuccess),
+              ).show(context);
             }
 
 
@@ -206,9 +343,7 @@ class ViewScreen extends StatelessWidget {
                                                                     index]
                                                                 .soldierImage!
                                                                 .isNotEmpty
-                                                        ? FileImage(File(cubit
-                                                            .soldiersList[index]
-                                                            .soldierImage!))
+                                                        ? FileImage(File('$imagesPath\\${cubit.soldiersList[index].soldierImage!}'))
                                                         : const AssetImage(
                                                                 'assets/images/unknown_image.png')
                                                             as ImageProvider),
@@ -223,37 +358,57 @@ class ViewScreen extends StatelessWidget {
                                                       radius: 20.0,
                                                       fSize: 20.0,
                                                       text: back),
+
                                                   const SizedBox(width: 20.0),
                                                   defaultButton(
                                                       function: () async {
                                                         await cubit.pickImage();
-                                                        editImageController.text = cubit.savedImagePath;
+                                                        editImageController.text = cubit.imageFileName;
                                                       },
                                                       background: Colors.blue,
                                                       tColor: Colors.white,
                                                       width: 200.0,
                                                       radius: 20.0,
                                                       fSize: 20.0,
-                                                      text: edit),
+                                                      text: selectImage),
+
+                                                  const SizedBox(width: 20.0),
+                                                  defaultButton(
+                                                      function: () async {
+                                                        await cubit.updateSoldierImage(soldierId: cubit.soldiersList[index].soldierId!, imagePath: editImageController.text);
+                                                        Navigator.pop(context);
+                                                      },
+                                                      background: Colors.green,
+                                                      tColor: Colors.white,
+                                                      width: 200.0,
+                                                      radius: 20.0,
+                                                      fSize: 20.0,
+                                                      text: save),
                                                 ],
                                                 actionsAlignment: MainAxisAlignment.center,
                                               );
                                             });
                                       },
-                                      child: CircleAvatar(
-                                        radius: 50.0,
-                                        backgroundImage: cubit
-                                                        .soldiersList[index]
-                                                        .soldierImage !=
-                                                    null &&
+                                      child: Container(
+                                        width: 50.0,
+                                        height: 50.0,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                          image: DecorationImage(
+                                            image: cubit
+                                                .soldiersList[index]
+                                                .soldierImage !=
+                                                null &&
                                                 cubit.soldiersList[index]
                                                     .soldierImage!.isNotEmpty
-                                            ? FileImage(File(cubit
-                                                .soldiersList[index]
-                                                .soldierImage!))
-                                            : const AssetImage(
-                                                    'assets/images/unknown_image.png')
-                                                as ImageProvider,
+                                                ? FileImage(File('$imagesPath\\${cubit.soldiersList[index].soldierImage!}'))
+                                                : const AssetImage(
+                                                'assets/images/unknown_image.png')
+                                            as ImageProvider,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                     onTap: () {
@@ -313,7 +468,7 @@ class ViewScreen extends StatelessWidget {
                                           children: [
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editRankController,
                                                 type: TextInputType.text,
                                                 label: rank,
@@ -327,7 +482,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editNameController,
                                                 type: TextInputType.text,
                                                 label: name,
@@ -341,7 +496,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editSoldierIDController,
                                                 type: TextInputType.text,
                                                 label: soldierlId,
@@ -355,7 +510,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editNationalIDController,
                                                 type: TextInputType.text,
                                                 label: nationalId,
@@ -369,7 +524,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editPhoneController,
                                                 type: TextInputType.text,
                                                 label: phone,
@@ -383,7 +538,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editAddPhoneController,
                                                 type: TextInputType.text,
                                                 label: add_phone,
@@ -397,7 +552,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editFather_phoneController,
                                                 type: TextInputType.text,
                                                 label: fatherPhone,
@@ -411,7 +566,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editMother_phoneController,
                                                 type: TextInputType.text,
                                                 label: motherPhone,
@@ -425,7 +580,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editCityController,
                                                 type: TextInputType.text,
                                                 label: city,
@@ -439,7 +594,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editHomeAddressController,
                                                 type: TextInputType.text,
                                                 label: homeAddress,
@@ -453,7 +608,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editBirthDateController,
                                                 type: TextInputType.text,
                                                 label: bDate,
@@ -467,7 +622,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editFacultyController,
                                                 type: TextInputType.text,
                                                 label: faculty,
@@ -481,7 +636,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editSpecController,
                                                 type: TextInputType.text,
                                                 label: speciality,
@@ -495,7 +650,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editSkillsController,
                                                 type: TextInputType.text,
                                                 label: skills,
@@ -509,7 +664,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editFather_jobController,
                                                 type: TextInputType.text,
                                                 label: fatherJob,
@@ -523,7 +678,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editMother_jobController,
                                                 type: TextInputType.text,
                                                 label: motherJob,
@@ -537,7 +692,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editFunctionController,
                                                 type: TextInputType.text,
                                                 label: job,
@@ -551,7 +706,7 @@ class ViewScreen extends StatelessWidget {
 
                                             const SizedBox(height: 20.0),
 
-                                            defaultFormField(
+                                            defaultArabicFormField(
                                                 controller: editRetiringDateController,
                                                 type: TextInputType.text,
                                                 label: retireDate,
@@ -590,6 +745,18 @@ class ViewScreen extends StatelessWidget {
                                                         actions: [
                                                           defaultButton(
                                                               function: () {
+                                                                cubit.pickSoldierNationalIdImage();
+                                                                editSoldierNationalIdImageController.text = cubit.savedSoldierNationalIdImagePath;
+
+                                                              },
+                                                              background: Colors.blue,
+                                                              tColor: Colors.white,
+                                                              radius: 20.0,
+                                                              fSize: 20.0,
+                                                              text: selectImage),
+                                                          const SizedBox(height: 20.0),
+                                                          defaultButton(
+                                                              function: () {
                                                                 Navigator.pop(context);
                                                               },
                                                               background: Colors.black,
@@ -626,6 +793,18 @@ class ViewScreen extends StatelessWidget {
                                                           fit: BoxFit.cover,
                                                         ),
                                                         actions: [
+                                                          defaultButton(
+                                                              function: () {
+                                                                cubit.pickSoldierIdImage();
+                                                                editSoldierIdImageController.text = cubit.savedSoldierIdImagePath;
+
+                                                              },
+                                                              background: Colors.blue,
+                                                              tColor: Colors.white,
+                                                              radius: 20.0,
+                                                              fSize: 20.0,
+                                                              text: selectImage),
+                                                          const SizedBox(height: 20.0),
                                                           defaultButton(
                                                               function: () {
                                                                 Navigator.pop(context);
@@ -702,13 +881,15 @@ class ViewScreen extends StatelessWidget {
                                                   text: edit,
                                                   function: () {
                                                     cubit.updateSoldier(
+                                                      id: cubit.soldierModel!.id.toString(),
                                                       name: editNameController.text,
                                                       rank: editRankController.text,
                                                       phone: editPhoneController.text,
                                                       addPhone: editAddPhoneController.text,
                                                       birthDate: editBirthDateController.text,
                                                       city: editCityController.text,
-                                                      image: cubit.savedImagePath,
+                                                      image: cubit.savedImagePath ?? editImageController.text,
+                                                      nationalID: editNationalIDController.text,
                                                       soldierID: editSoldierIDController.text,
                                                       retiringDate: editRetiringDateController.text,
                                                       faculty: editFacultyController.text,
@@ -724,6 +905,8 @@ class ViewScreen extends StatelessWidget {
                                                       skills: editSkillsController.text,
                                                       function: editFunctionController.text,
                                                       joinDate: editJoinDateController.text,
+                                                      soldierIdImage: editSoldierIdImageController.text,
+                                                      soldierNationalIdImage: editSoldierNationalIdImageController.text,
                                                     );
                                                   },
                                                 ),
