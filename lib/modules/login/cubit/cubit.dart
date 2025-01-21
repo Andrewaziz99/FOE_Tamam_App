@@ -77,14 +77,14 @@ class LoginCubit extends Cubit<LoginStates> {
       print(e);
     }
 
-    final _hashedPass = PasswordHasher.hashPassword(password);
+    final hashedPass = PasswordHasher.hashPassword(password);
 
 
 
     try {
       db.execute('''
     INSERT INTO users (username, password, is_admin)
-    VALUES ('$username', '$_hashedPass', 0)
+    VALUES ('$username', '$hashedPass', 0)
   ''');
       emit(RegisterSuccessState());
     } catch (e) {
@@ -129,7 +129,7 @@ class LoginCubit extends Cubit<LoginStates> {
      final isCorrect = user['password'] == hashedPassword;
       if (isCorrect) {
         emit(LoginSuccessState());
-        navigateAndFinish(context, MainMenuScreen(isAdmin: isAdmin));
+        navigateAndFinish(context, MainMenuScreen(userName: username, isAdmin: isAdmin));
       } else {
         emit(LoginErrorState('Incorrect password.'));
       }
@@ -142,4 +142,36 @@ class LoginCubit extends Cubit<LoginStates> {
       db.dispose();
     }
   }
+
+  Future<void> changePassword({required context,
+    required username,
+    required oldPassword,
+    required newPassword,
+}) async{
+    final dbPath = await getAppDatabaseFile();
+    final db =  sqlite3.open(dbPath);
+
+    emit(changePasswordLoadingState());
+
+    final hashedOldPassword = PasswordHasher.hashPassword(oldPassword);
+    final hashedNewPassword = PasswordHasher.hashPassword(newPassword);
+    try {
+
+      db.execute('''
+      UPDATE users
+      SET
+      password = "$hashedNewPassword"
+      WHERE username = "$username" AND password = "$hashedOldPassword"
+      ''');
+      emit(changePasswordSuccessState());
+      logOut(context);
+    } catch(e) {
+      emit(changePasswordErrorState());
+      print(e);
+    } finally {
+      db.dispose();
+    }
+
+  }
+
 }

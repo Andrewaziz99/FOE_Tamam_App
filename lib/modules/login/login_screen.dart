@@ -128,7 +128,7 @@ class LoginScreen extends StatelessWidget {
                                         if (_formKey.currentState!.validate()) {
                                           cubit.userLogin(context: context,
                                               username: userNameController.text,
-                                              password: passwordController.text);
+                                              password: convertArabicToEnglish(passwordController.text));
 
                                         }
 
@@ -146,21 +146,11 @@ class LoginScreen extends StatelessWidget {
                                       if (_formKey.currentState!.validate()) {
                                         cubit.userLogin(context: context,
                                             username: userNameController.text,
-                                            password: passwordController.text);
+                                            password: convertArabicToEnglish(passwordController.text));
                                       }
 
                                     },
                                     text: login,
-                                    fSize: 20.0,
-                                    radius: 15.0,
-                                  ),
-                                  const SizedBox(height: 20),
-                                  defaultButton(
-                                    function: () {
-
-                                      cubit.register(userNameController.text, passwordController.text);
-                                    },
-                                    text: register,
                                     fSize: 20.0,
                                     radius: 15.0,
                                   ),
