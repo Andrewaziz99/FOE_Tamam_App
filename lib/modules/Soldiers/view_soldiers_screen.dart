@@ -53,6 +53,36 @@ class ViewSoldiersScreen extends StatelessWidget {
         listener: (BuildContext context, state) {
           var cubit = AppCubit.get(context);
 
+          if (state is pickSoldierIdImageSuccess) {
+            soldierIdImageController.text = cubit.savedSoldierIdImagePath;
+            CherryToast.success(
+              animationType: AnimationType.fromTop,
+              enableIconAnimation: true,
+              animationCurve: Curves.easeInOutQuint,
+              displayIcon: true,
+              toastDuration: const Duration(seconds: 5),
+              displayCloseButton: true,
+              autoDismiss: true,
+              toastPosition: Position.top,
+              title: const Text(imagePickSuccess),
+            ).show(context);
+          }
+
+          if (state is pickSoldierNationalIdImageSuccess) {
+            soldierNationalIdImageController.text = cubit.savedSoldierNationalIdImagePath;
+            CherryToast.success(
+              animationType: AnimationType.fromTop,
+              enableIconAnimation: true,
+              animationCurve: Curves.easeInOutQuint,
+              displayIcon: true,
+              toastDuration: const Duration(seconds: 5),
+              displayCloseButton: true,
+              autoDismiss: true,
+              toastPosition: Position.top,
+              title: const Text(imagePickSuccess),
+            ).show(context);
+          }
+
           if(state is getSoldierByIdSuccess){
             var cubit = AppCubit.get(context);
 
@@ -280,7 +310,10 @@ class ViewSoldiersScreen extends StatelessWidget {
                                   child: CircleAvatar(
                                     radius: 150,
                                     backgroundImage:
-                                    FileImage(File('${cubit.soldiersList[index].soldierImage}')),
+                                    cubit.soldiersList[index].soldierImage != null &&
+                                        cubit.soldiersList[index].soldierImage!.isNotEmpty
+                                        ? FileImage(File(cubit.soldiersList[index].soldierImage!))
+                                        : const AssetImage('assets/images/unknown_image.png') as ImageProvider,
                                   ),
                                 ),
                               ),
@@ -326,6 +359,20 @@ class ViewSoldiersScreen extends StatelessWidget {
                               //soldierAddPhone
                               Text(
                                   '$add_phone: ${cubit.soldiersList[index].soldierAddPhone}'),
+                              const SizedBox(
+                                height: 10.0,
+                              ),
+
+                              //soldierAddPhone
+                              Text(
+                                  '$fatherPhone: ${cubit.soldiersList[index].soldierFatherPhone}'),
+                              const SizedBox(
+                                height: 10.0,
+                              ),
+
+                              //soldierAddPhone
+                              Text(
+                                  '$motherPhone: ${cubit.soldiersList[index].soldierMotherPhone}'),
                               const SizedBox(
                                 height: 10.0,
                               ),
@@ -898,7 +945,6 @@ class ViewSoldiersScreen extends StatelessWidget {
                                                                         birthDate: editBirthDateController.text,
                                                                         city: editCityController.text,
                                                                         image: cubit.savedImagePath,
-                                                                        nationalID: editNationalIDController.text,
                                                                         soldierID: editSoldierIDController.text,
                                                                         retiringDate: editRetiringDateController.text,
                                                                         faculty: editFacultyController.text,
