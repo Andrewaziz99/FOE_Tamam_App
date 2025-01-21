@@ -10,18 +10,10 @@ import '../network/local/cache_helper.dart';
 import 'components.dart';
 
 void signOut(context) {
-  CacheHelper.removeData(key: 'uId').then((value) {
-    if (value) {
       navigateAndFinish(context, LoginScreen());
-    }
-  });
-
-  CacheHelper.removeAllData();
 }
 
 void logOut(context) {
-  CacheHelper.removeAllData();
-
   navigateAndFinish(context, LoginScreen());
 }
 
@@ -29,6 +21,9 @@ void printFullText(String text) {
   final pattern = RegExp('.{1,800}'); // 800 is the size of each chunk
   pattern.allMatches(text).forEach((match) => print(match.group(0)));
 }
+
+const userName = '';
+
 
 const String appTitle = "تنظيم وأفراد مكتب السيد/ مدير الجهاز";
 const String username = "اسم المستخدم";
@@ -147,6 +142,7 @@ const String printMissions = 'طباعة المهام اليومية للجنو�
 const String printMissionSuccess = 'تم طباعة المهام اليومية للجنود بنجاح';
 const String printMissionError = 'خطأ في طباعة المهام اليومية للجنود';
 
+const String VIPReecption = ' VIP استقبال';
 const String frontReception = 'الاستقبال الرئيسي ١';
 const String backReception = 'الاستقبال الخلفي ٢';
 const String sideReception = 'الاستقبال الجانبي ٣';
@@ -203,7 +199,38 @@ const String editVacationSuccess = 'تم تعديل الاجازة بنجاح';
 const String save = 'حفظ';
 const String makeVacationSuccessMsg = 'تم تسجيل الاجازة بنجاح';
 
+const String durationFromLastVacation = 'المدة من آخر اجازة';
+
+
+
+const String soldierIdImage = 'ارقام ملف تحقيق الشخصية العسكرية';
+const String soldierNationalIdImage = 'ارقام ملف بطاقة الرقم القومي';
+
+const String addNewSoldier = 'إضافة جندى جديد';
+
+const String back = 'رجوع';
+
+const String deleteSoldier = 'حذف الجندى';
+const String deleteSoldierProgress = 'سيتم حذف الجندى نهائياً';
+const String confirmDelete = 'تأكيد الحذف';
+// const String deleteSoldierSuccess = 'تم حذف الجندى بنجاح';
+const String selectImage = 'اختر صورة';
+
+
+
+const String settings = 'الإعدادات';
+
+const String changePass = 'تغيير كلمة المرور';
+
+const String oldPass = 'كلمة المرور القديمة';
+const String newPass = 'كلمة المرور الجديدة';
+const String confirmNewPass = 'تأكيد كلمة المرور الجديدة';
+
+const passwordsNotMatched = 'كلمة المرور غير متطابقة';
+const String passwordChangedSuccess = 'تم تغيير كلمة المرور بنجاح';
+
 const List<String> functions = [
+  VIPReecption,
   frontReception,
   backReception,
   sideReception,
