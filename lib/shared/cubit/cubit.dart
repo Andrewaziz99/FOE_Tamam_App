@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
@@ -8,6 +7,7 @@ import 'package:sqlite3/sqlite3.dart';
 import 'package:tamam/models/Soldiers/soldier_model.dart';
 import 'package:tamam/models/Vacations/vacation_model.dart';
 import 'package:tamam/modules/Soldiers/new_soldier_screen.dart';
+import 'package:tamam/modules/Soldiers/view_screen.dart';
 import 'package:tamam/shared/cubit/states.dart';
 import 'package:tamam/shared/network/local/cache_helper.dart';
 import '../components/constants.dart';
@@ -20,7 +20,7 @@ class AppCubit extends Cubit<AppStates> {
 
   static AppCubit get(context) => BlocProvider.of(context);
 
-  final currentDate =
+  var currentDate =
       convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
 
   String? selectedValue;
@@ -28,10 +28,12 @@ class AppCubit extends Cubit<AppStates> {
   void changeSelectedValue(String value) {
     selectedValue = value;
     emit(changeSoldierData());
+    getVacations();
   }
 
   // List<bool> isChecked = [];
   List<Map<String, dynamic>> isChecked = [];
+
   void updateCheckedList() {
     isChecked = List.generate(
       soldiers.length,
@@ -43,13 +45,10 @@ class AppCubit extends Cubit<AppStates> {
     emit(UpdateCheckedListState());
   }
 
-  void triggerCheckBox(val,index) {
+  void triggerCheckBox(val, index) {
     isChecked[index]['isChecked'] = val;
     emit(triggerCheckBoxState());
   }
-
-
-
 
   void removeSoldierFromList(int index) {
     soldiers.removeAt(index);
@@ -137,7 +136,8 @@ class AppCubit extends Cubit<AppStates> {
 
   List<Map<dynamic, dynamic>> soldiers = [];
 
-  void AddToList(index, soldierID, name, fromDate, toDate, feedBack, rank, isSaved) {
+  void AddToList(
+      index, soldierID, name, fromDate, toDate, feedBack, rank, isSaved) {
     soldiers.add({
       'soldierID': soldierID,
       'name': name,
@@ -165,7 +165,8 @@ class AppCubit extends Cubit<AppStates> {
     emit(updateListSuccess());
   }
 
-  Future<void> createMOVDocFromList(List<Map<dynamic, dynamic>> dataList) async {
+  Future<void> createMOVDocFromList(
+      List<Map<dynamic, dynamic>> dataList) async {
     try {
       // Locate and read the test template
       final appDir = await getTemplatesFolder();
@@ -202,7 +203,6 @@ class AppCubit extends Cubit<AppStates> {
           .format(DateTime.now().add(const Duration(days: 1))));
 
       for (int i = 0; i < dataList.length; i++) {
-
         final data = dataList[i];
 
         // Create a row for the current data
@@ -345,7 +345,8 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-  Future<void> createVACDocFromList(List<Map<dynamic, dynamic>> dataList) async {
+  Future<void> createVACDocFromList(
+      List<Map<dynamic, dynamic>> dataList) async {
     try {
       // Load the Word template
       final appDir = await getTemplatesFolder();
@@ -408,12 +409,28 @@ class AppCubit extends Cubit<AppStates> {
     getAllSoldiers();
     getActiveVacations();
 
+    if (activeVacationData.isEmpty) {
+      CacheHelper.saveData(
+          key: 'soldiersInVacation', value: 0);
+      CacheHelper.saveData(
+          key: 'capSoldiersInVacation', value: 0);
+    }
+
+
     emit(TamamLoading());
 
-    final T_id = await CacheHelper.getData(key: 'T_id') ?? 1;
+    for (int index = 0; index < VacData.length; index++) {
+      calculateDifference(
+          soldierId: VacData[index].soldierId, toDate: VacData[index].toDate);
+
+      if (difference < 0 || difference > 0) {
+        // removeSoldierFromList(index);
+      }
+    }
+
+    final tId = await CacheHelper.getData(key: 'T_id') ?? 1;
 
     List<RowContent> allRows = [];
-
 
     for (int i = 0; i < VacData.length; i++) {
       final vacationData = VacData[i];
@@ -442,57 +459,65 @@ class AppCubit extends Cubit<AppStates> {
       final tamamBytes = await tamamFile.readAsBytes();
       final tamamDoc = await DocxTemplate.fromBytes(tamamBytes);
 
-      final dayDate = convertToArabic(DateFormat('yyyy-MM-dd').format(DateTime.now()));
+      final dayDate =
+          convertToArabic(DateFormat('yyyy-MM-dd').format(DateTime.now()));
 
-      final currentDate = convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
+      final currentDate =
+          convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
 
       final today = DateTime.now();
-      final weekday = getWeekDay(DateFormat('EEEE').format(today).toLowerCase());
+      final weekday =
+          getWeekDay(DateFormat('EEEE').format(today).toLowerCase());
 
-      final currentYear = convertToArabic(DateFormat('yyyy').format(DateTime.now()));
+      final currentYear =
+          convertToArabic(DateFormat('yyyy').format(DateTime.now()));
 
+      final logoFileContent =
+          await File('$appDir\\images\\logo.png').readAsBytes();
+      final signatureFileContent =
+          await File('$appDir\\images\\signature1.png').readAsBytes();
 
+      final allSoldiers =
+          convertToArabic(CacheHelper.getData(key: 'ALL').toString());
 
-      final logoFileContent = await File('$appDir\\images\\logo.png').readAsBytes();
-      final signatureFileContent = await File('$appDir\\images\\signature1.png').readAsBytes();
+      final inVacation = convertToArabic(
+          (CacheHelper.getData(key: 'soldiersInVacation') +
+                  CacheHelper.getData(key: 'capSoldiersInVacation'))
+              .toString());
 
-
-
-
-
-
-      final allSoldiers = convertToArabic(CacheHelper.getData(key: 'ALL').toString());
-
-      final inVacation = convertToArabic((CacheHelper.getData(key: 'soldiersInVacation') + CacheHelper.getData(key: 'capSoldiersInVacation')).toString());
-
-      final present = convertToArabic((CacheHelper.getData(key: 'ALL') - CacheHelper.getData(key: 'soldiersInVacation') - CacheHelper.getData(key: 'capSoldiersInVacation')).toString());
+      final present = convertToArabic((CacheHelper.getData(key: 'ALL') -
+              CacheHelper.getData(key: 'soldiersInVacation') -
+              CacheHelper.getData(key: 'capSoldiersInVacation'))
+          .toString());
 
       final out = convertToArabic('0');
 
-      var soldiersInVacation = convertToArabic(CacheHelper.getData(key: 'soldiersInVacation').toString());
+      var soldiersInVacation = convertToArabic(
+          CacheHelper.getData(key: 'soldiersInVacation').toString());
 
-      final soldiersNumber = convertToArabic(CacheHelper.getData(key: 'soldiersNumber').toString());
+      final soldiersNumber = convertToArabic(
+          CacheHelper.getData(key: 'soldiersNumber').toString());
 
-      final capSoldiersNumber = convertToArabic(CacheHelper.getData(key: 'capSoldiersNumber').toString());
+      final capSoldiersNumber = convertToArabic(
+          CacheHelper.getData(key: 'capSoldiersNumber').toString());
 
-      final presentSoldiersNumber = convertToArabic((CacheHelper.getData(key: 'soldiersNumber') - CacheHelper.getData(key: 'soldiersInVacation')).toString());
+      final presentSoldiersNumber = convertToArabic(
+          (CacheHelper.getData(key: 'soldiersNumber') -
+                  CacheHelper.getData(key: 'soldiersInVacation'))
+              .toString());
 
-      final presentCapSoldiersNumber = convertToArabic((CacheHelper.getData(key: 'capSoldiersNumber') - CacheHelper.getData(key: 'capSoldiersInVacation')).toString());
+      final presentCapSoldiersNumber = convertToArabic(
+          (CacheHelper.getData(key: 'capSoldiersNumber') -
+                  CacheHelper.getData(key: 'capSoldiersInVacation'))
+              .toString());
 
-      var capSoldiersInVacation = convertToArabic(CacheHelper.getData(key: 'capSoldiersInVacation').toString());
+      var capSoldiersInVacation = convertToArabic(
+          CacheHelper.getData(key: 'capSoldiersInVacation').toString());
 
-
-
-      if (inVacation == 0) {
+      if (inVacation == convertToArabic('0')) {
         soldiersInVacation = convertToArabic('0');
         capSoldiersInVacation = convertToArabic('0');
-
       }
-
-
-
-
-
 
       // Populate placeholders
       Content content = Content();
@@ -500,13 +525,10 @@ class AppCubit extends Cubit<AppStates> {
         ..add(ImageContent("logo", logoFileContent))
         ..add(ImageContent("signature", signatureFileContent))
         ..add(TextContent("dept_Name", office))
-        ..add(TextContent("T_id", convertToArabic(T_id.toString())))
+        ..add(TextContent("T_id", convertToArabic(tId.toString())))
         ..add(TextContent("year", currentYear))
         ..add(TextContent("currentDate", currentDate))
         ..add(TextContent("day", weekday))
-
-
-
         ..add(TextContent("ALL", allSoldiers))
         ..add(TextContent("PRESENT", present))
         ..add(TextContent("VAC", inVacation))
@@ -534,7 +556,7 @@ class AppCubit extends Cubit<AppStates> {
 
         emit(TamamSuccess());
 
-        await CacheHelper.saveData(key: 'T_id', value: T_id + 1);
+        await CacheHelper.saveData(key: 'T_id', value: tId + 1);
       } else {
         emit(TamamError());
         error = 'Failed to generate document';
@@ -567,6 +589,7 @@ class AppCubit extends Cubit<AppStates> {
 
   var image;
   var savedImagePath;
+  String imageFileName = '';
 
   Future<void> pickImage() async {
     emit(pickImageLoading());
@@ -578,8 +601,9 @@ class AppCubit extends Cubit<AppStates> {
         .then((value) async {
       if (value != null) {
         image = value.files.first.path;
+        imageFileName = value.files.first.name;
         savedImagePath = await saveImage(File(image));
-        imageController.text = savedImagePath;
+        imageController.text = imageFileName;
         emit(pickImageSuccess());
       } else {
         emit(pickImageError());
@@ -616,6 +640,8 @@ class AppCubit extends Cubit<AppStates> {
     required joinDate,
     inVAC,
     isOUT,
+    soldierIdImage,
+    soldierNationalIdImage,
   }) async {
     emit(enterNewSoldierLoading());
 
@@ -649,7 +675,9 @@ class AppCubit extends Cubit<AppStates> {
         soldierFunction TEXT NOT NULL,
         soldierJoinDate TEXT NOT NULL,
         inVAC BOOL NOT NULL,
-        isOUT BOOL NOT NULL
+        isOUT BOOL NOT NULL,
+        soldierIdImage TEXT,
+        soldierNationalIdImage TEXT
       )''');
     } catch (e) {
       print(e);
@@ -657,9 +685,9 @@ class AppCubit extends Cubit<AppStates> {
 
     try {
       db.execute(''' INSERT INTO soldiers (
-        soldierName, soldierRank, soldierPhone, soldierAddPhone, soldierHomeAddress, soldierBDate, soldierCity, soldierImage, soldierNationalId, soldierId, soldierRetireDate, soldierFaculty, soldierSpeciality, soldierGrade, soldierHomePhone, soldierFatherJob, soldierMotherJob, soldierFatherPhone, soldierMotherPhone, soldierNumOfSiblings, soldierSkills, soldierFunction, soldierJoinDate, inVAC, isOUT
+        soldierName, soldierRank, soldierPhone, soldierAddPhone, soldierHomeAddress, soldierBDate, soldierCity, soldierImage, soldierNationalId, soldierId, soldierRetireDate, soldierFaculty, soldierSpeciality, soldierGrade, soldierHomePhone, soldierFatherJob, soldierMotherJob, soldierFatherPhone, soldierMotherPhone, soldierNumOfSiblings, soldierSkills, soldierFunction, soldierJoinDate, inVAC, isOUT, soldierIdImage, soldierNationalIdImage
       ) VALUES (
-        "$name", "$rank", "$phone", "$addPhone", "$homeAddress", "$birthDate", "$city", "$image", "$nationalID", "$soldierID", "$retiringDate", "$faculty", "$spec", "$grade", "$home_num", "$father_job", "$mother_job", "$father_phone", "$mother_phone", "$num_of_siblings", "$skills", "$function", "$joinDate", false, false
+        "$name", "$rank", "$phone", "$addPhone", "$homeAddress", "$birthDate", "$city", "$image", "$nationalID", "$soldierID", "$retiringDate", "$faculty", "$spec", "$grade", "$home_num", "$father_job", "$mother_job", "$father_phone", "$mother_phone", "$num_of_siblings", "$skills", "$function", "$joinDate", false, false, "$soldierIdImage", "$soldierNationalIdImage"
       )''');
       print("Soldier inserted");
       db.dispose();
@@ -695,14 +723,12 @@ class AppCubit extends Cubit<AppStates> {
         CacheHelper.saveData(key: 'capSoldiersInVacation', value: 0);
       }
 
-
       int soldiersNum = 0;
       int capSoldiersNum = 0;
 
       for (var value in soldiersList) {
         soldiersName.add(value.soldierName!);
         soldiersName.sort();
-
 
         if (value.soldierRank == 'جندى') {
           soldiersNum++;
@@ -711,10 +737,8 @@ class AppCubit extends Cubit<AppStates> {
         }
         CacheHelper.saveData(key: 'soldiersNumber', value: soldiersNum);
         CacheHelper.saveData(key: 'capSoldiersNumber', value: capSoldiersNum);
-
       }
       CacheHelper.saveData(key: 'ALL', value: soldiersList.length);
-
 
       emit(getAllSoldiersSuccess());
     } catch (e) {
@@ -826,7 +850,6 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-
   List<SoldierModel> soldierInVAC = [];
 
   Future<void> getInVAC() async {
@@ -840,6 +863,7 @@ class AppCubit extends Cubit<AppStates> {
         SELECT * FROM soldiers WHERE inVAC = 1
       ''');
       soldierNotInVAC = soldiers.map((e) => SoldierModel.fromJson(e)).toList();
+
       db.dispose();
       emit(getSoldierByIdSuccess());
     } catch (e) {
@@ -936,7 +960,6 @@ class AppCubit extends Cubit<AppStates> {
   }
 
   List<VacationModel> VacData = [];
-  VacationModel? vacationModel;
 
   Future<void> getVacations() async {
     emit(getVacationsLoading());
@@ -950,7 +973,16 @@ class AppCubit extends Cubit<AppStates> {
       ''');
       VacData = vacations.map((e) => VacationModel.fromJson(e)).toList();
 
+
       for (var vacation in VacData) {
+
+        calculateDifference(
+            soldierId: vacation.soldierId, toDate: vacation.toDate);
+        if (difference >= 0) {
+          updateActiveVacationFor(soldierId: vacation.soldierId, isActive: 0);
+          updateInVAC(vacation.soldierId, 0);
+        }
+
         if (vacation.toDate! == currentDate) {
           updateActiveVacationFor(soldierId: vacation.soldierId, isActive: 0);
           updateInVAC(vacation.soldierId, 0);
@@ -1016,7 +1048,6 @@ class AppCubit extends Cubit<AppStates> {
         SET isActive = ?
       ''', [isActive]);
       emit(updateActiveVacationSuccessState());
-
     } catch (e) {
       emit(updateActiveVacationErrorState());
       print(e);
@@ -1025,7 +1056,8 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-  Future<void> updateActiveVacationFor({required soldierId,required isActive}) async {
+  Future<void> updateActiveVacationFor(
+      {required soldierId, required isActive}) async {
     emit(updateActiveVacationForLoadingState());
 
     final dbPath = await getSoldiersDatabaseFile();
@@ -1038,7 +1070,6 @@ class AppCubit extends Cubit<AppStates> {
         WHERE soldierId = '$soldierId'
       ''', [isActive]);
       emit(updateActiveVacationForSuccessState());
-
     } catch (e) {
       emit(updateActiveVacationForErrorState());
       print(e);
@@ -1046,7 +1077,6 @@ class AppCubit extends Cubit<AppStates> {
       db.dispose();
     }
   }
-
 
   Future<void> getExtendedVacations() async {
     emit(getExtendedVacationLoadingState());
@@ -1060,13 +1090,6 @@ class AppCubit extends Cubit<AppStates> {
       ''');
       VacData = vacations.map((e) => VacationModel.fromJson(e)).toList();
 
-      // for (var vacation in VacData) {
-      //   if (vacation.toDate! == currentDate) {
-      //     updateVacation(isActive: 0);
-      //     updateInVAC(vacation.soldierId, 0);
-      //   }
-      // }
-
       emit(getExtendedVacationSuccessState());
     } catch (e) {
       emit(getExtendedVacationErrorState());
@@ -1075,6 +1098,8 @@ class AppCubit extends Cubit<AppStates> {
       db.dispose();
     }
   }
+
+  List<VacationModel> activeVacationData = [];
 
   Future<void> getActiveVacations() async {
     emit(getActiveVacationsLoadingState());
@@ -1086,25 +1111,36 @@ class AppCubit extends Cubit<AppStates> {
       final vacations = db.select('''
         SELECT * FROM vacations WHERE isActive = 1
       ''');
+      activeVacationData =
+          vacations.map((e) => VacationModel.fromJson(e)).toList();
       VacData = vacations.map((e) => VacationModel.fromJson(e)).toList();
 
       int soldiersInVacation = 0;
       int capSoldiersInVacation = 0;
 
-      for (var vacation in VacData) {
-
+      for (var vacation in activeVacationData) {
         if (vacation.rank == 'جندى') {
           soldiersInVacation++;
-        }  else {
+        } else {
           capSoldiersInVacation++;
         }
 
-        CacheHelper.saveData(key: 'soldiersInVacation', value: soldiersInVacation);
-        CacheHelper.saveData(key: 'capSoldiersInVacation', value: capSoldiersInVacation);
+        CacheHelper.saveData(
+            key: 'soldiersInVacation', value: soldiersInVacation);
+        CacheHelper.saveData(
+            key: 'capSoldiersInVacation', value: capSoldiersInVacation);
 
+        calculateDifference(
+            soldierId: vacation.soldierId, toDate: vacation.toDate);
+        print(difference);
+
+        if (difference >= 0) {
+          updateActiveVacationFor(soldierId: vacation.soldierId, isActive: 0);
+          updateInVAC(vacation.soldierId, 0);
+        }
 
         if (vacation.toDate! == currentDate) {
-          // updateVacation(isActive: 0);
+          updateActiveVacationFor(soldierId: vacation.soldierId, isActive: 0);
           updateInVAC(vacation.soldierId, 0);
         }
       }
@@ -1168,10 +1204,7 @@ class AppCubit extends Cubit<AppStates> {
     final extendedDateArabic =
         convertToArabic(DateFormat("yyyy/MM/dd").format(extendedDate));
 
-    print('Updating vacation for soldier $soldierID to $extendedDateArabic');
     try {
-      print('Updating VACATION DATA for soldier $soldierID to $extendedDateArabic');
-      print(convertToArabic(toDate));
       final arabicToDate = convertToArabic(toDate);
 
       db.execute('''
@@ -1187,7 +1220,6 @@ class AppCubit extends Cubit<AppStates> {
       emit(extendVacationErrorState());
       print('Error extending vacation: $e');
     }
-
   }
 
   Future<void> stopVacation(
@@ -1197,7 +1229,8 @@ class AppCubit extends Cubit<AppStates> {
     final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
-    final currentDate = convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
+    final currentDate =
+        convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
     updateActiveVacationFor(soldierId: soldierID, isActive: 0);
     updateInVAC(soldierID, 0);
 
@@ -1209,7 +1242,6 @@ class AppCubit extends Cubit<AppStates> {
       ''', [currentDate]);
 
       emit(StopVacationSuccessState());
-
 
       getAllSoldiers();
       getActiveVacations();
@@ -1223,15 +1255,17 @@ class AppCubit extends Cubit<AppStates> {
   }
 
   Future<void> updateSoldier(
-      {name,
+      {
+        id,
+        name,
       rank,
       phone,
       addPhone,
       birthDate,
       city,
       image,
-      nationalID,
       required soldierID,
+      nationalID,
       retiringDate,
       faculty,
       spec,
@@ -1245,7 +1279,10 @@ class AppCubit extends Cubit<AppStates> {
       num_of_siblings,
       skills,
       function,
-      joinDate}) async {
+      joinDate,
+        soldierIdImage,
+        soldierNationalIdImage
+      }) async {
     emit(updateSoldierLoading());
 
     final dbPath = await getSoldiersDatabaseFile();
@@ -1259,11 +1296,12 @@ class AppCubit extends Cubit<AppStates> {
     soldierRank = "$rank",
     soldierPhone = "$phone",
     soldierAddPhone = "$addPhone",
+    soldierId = "$soldierID",
+    soldierNationalId = "$nationalID",
     soldierHomeAddress = "$homeAddress",
     soldierBDate = "$birthDate",
     soldierCity = "$city",
     soldierImage = "$image",
-    soldierNationalId = "$nationalID",
     soldierRetireDate = "$retiringDate",
     soldierFaculty = "$faculty",
     soldierSpeciality = "$spec",
@@ -1276,12 +1314,14 @@ class AppCubit extends Cubit<AppStates> {
     soldierNumOfSiblings = "$num_of_siblings",
     soldierSkills = "$skills",
     soldierFunction = "$function",
-    soldierJoinDate = "$joinDate"
-  WHERE soldierId = "$soldierID"
+    soldierJoinDate = "$joinDate",
+    soldierIdImage = "$soldierIdImage",
+    soldierNationalIdImage = "$soldierNationalIdImage"
+  WHERE id = "$id"
 ''');
-      print("Soldier updated");
       db.dispose();
       emit(updateSoldierSuccess());
+      getAllSoldiers();
     } catch (e) {
       emit(updateSoldierError());
       print(e);
@@ -1324,9 +1364,7 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-
-
-  Future<void> deleteVacation(soldierId) async {
+  Future<void> deleteVacation(soldierId, fromDate, toDate) async {
     emit(deleteVacationLoadingState());
 
     final dbPath = await getSoldiersDatabaseFile();
@@ -1334,8 +1372,8 @@ class AppCubit extends Cubit<AppStates> {
 
     try {
       db.execute('''
-      DELETE FROM vacations WHERE soldierId = ?
-    ''', [soldierId]);
+      DELETE FROM vacations WHERE soldierId = ? AND fromDate = ? AND toDate = ?
+    ''', [soldierId, fromDate, toDate]);
       emit(deleteVacationSuccessState());
       updateInVAC(soldierId, 0);
       updateActiveVacationFor(soldierId: soldierId, isActive: 0);
@@ -1347,7 +1385,6 @@ class AppCubit extends Cubit<AppStates> {
       db.dispose();
     }
   }
-
 
   List<Map<dynamic, dynamic>> missionsData = [];
 
@@ -1361,4 +1398,123 @@ class AppCubit extends Cubit<AppStates> {
     print(missionsData);
     emit(setMissionSuccess());
   }
+
+  int difference = 0;
+
+  void calculateDifference({required soldierId, required toDate}) {
+    emit(calculateDifferenceLoadingState());
+
+    try {
+      DateFormat format = DateFormat("yyyy/MM/dd");
+
+      DateTime toDateDT = format.parse(convertArabicToEnglish(toDate));
+
+      DateTime currentDateDT =
+          format.parse(convertArabicToEnglish(currentDate));
+
+      difference = currentDateDT.difference(toDateDT).inDays;
+
+      emit(calculateDifferenceSuccessState());
+    } catch (error) {
+      emit(calculateDifferenceErrorState());
+      print(error);
+    }
+  }
+
+  VacationModel? lastVacation;
+
+  Future<void> getLastVacationFor({required soldierName}) async {
+    emit(getLastVacationForLoadingState());
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      final vacations = db.select('''
+        SELECT * FROM vacations WHERE name = ?
+      ''', [soldierName]);
+
+      lastVacation =
+          vacations.map((e) => VacationModel.fromJson(e)).toList().last;
+
+      emit(getLastVacationForSuccessState());
+    } catch (error) {
+      emit(getLastVacationForErrorState());
+      print(error);
+    }
+  }
+
+  var soldierIdImage;
+  var savedSoldierIdImagePath;
+
+  Future<void> pickSoldierIdImage() async {
+    emit(pickSoldierIdImageLoading());
+    FilePicker.platform
+        .pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+    )
+        .then((value) async {
+      if (value != null) {
+        soldierIdImage = value.files.first.path;
+        savedSoldierIdImagePath = await saveImage(File(soldierIdImage));
+        soldierIdImageController.text = savedSoldierIdImagePath;
+        emit(pickSoldierIdImageSuccess());
+      } else {
+        emit(pickSoldierIdImageError());
+      }
+    }).catchError((error) {
+      emit(pickSoldierIdImageError());
+      print(error);
+    });
+  }
+
+  var soldierNationalIdImage;
+  var savedSoldierNationalIdImagePath;
+
+  Future<void> pickSoldierNationalIdImage() async {
+    emit(pickSoldierNationalIdImageLoading());
+    FilePicker.platform
+        .pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+    )
+        .then((value) async {
+      if (value != null) {
+        soldierNationalIdImage = value.files.first.path;
+        savedSoldierNationalIdImagePath =
+            await saveImage(File(soldierNationalIdImage));
+        soldierNationalIdImageController.text = savedSoldierNationalIdImagePath;
+        emit(pickSoldierNationalIdImageSuccess());
+      } else {
+        emit(pickSoldierNationalIdImageError());
+      }
+    }).catchError((error) {
+      emit(pickSoldierNationalIdImageError());
+      print(error);
+    });
+  }
+
+  Future<void> updateSoldierImage({required soldierId, required imagePath})async{
+    emit(updateSoldierImageLoading());
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      db.execute('''
+  UPDATE soldiers
+  SET
+    soldierImage = "$imagePath"
+  WHERE soldierId = "$soldierId"
+''');
+      db.dispose();
+      emit(updateSoldierImageSuccess());
+      getAllSoldiers();
+    } catch (e) {
+      emit(updateSoldierImageError());
+      print(e);
+    }
+  }
+
+
+
 }
