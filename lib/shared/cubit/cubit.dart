@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:sqlite3/sqlite3.dart';
+import 'package:tamam/models/Missions/mission_model.dart';
 import 'package:tamam/models/Soldiers/soldier_model.dart';
 import 'package:tamam/models/Vacations/vacation_model.dart';
 import 'package:tamam/modules/Soldiers/new_soldier_screen.dart';
@@ -55,8 +57,10 @@ class AppCubit extends Cubit<AppStates> {
     emit(deleteFromListSuccess());
   }
 
-  Future<void> createMissionDoc(missionsList) async {
+  Future<void> createMissionDoc() async {
     emit(printMissionsLoadingState());
+
+    getTodayMissions(date: currentDate);
 
     try {
       // Locate and read the test template
@@ -85,8 +89,8 @@ class AppCubit extends Cubit<AppStates> {
       final weekday =
           getWeekDay(DateFormat('EEEE').format(today).toLowerCase());
 
-      for (int i = 0; i < missionsList.length; i++) {
-        final data = missionsList[i];
+      for (int i = 0; i < missions.length; i++) {
+        final data = missions[i];
 
         final row = RowContent()
           ..add(TextContent("name", data['soldierName']))
@@ -115,7 +119,7 @@ class AppCubit extends Cubit<AppStates> {
       final generatedDoc = await missionDoc.generate(content);
 
       if (generatedDoc != null) {
-        final mission = File('$appDir\\output\\$missions $dayDate.docx');
+        final mission = File('$appDir\\output\\$missionsConstant $dayDate.docx');
         await mission.writeAsBytes(generatedDoc, flush: true);
 
         print("Document generated successfully at: ${mission.path}");
@@ -410,12 +414,9 @@ class AppCubit extends Cubit<AppStates> {
     getActiveVacations();
 
     if (activeVacationData.isEmpty) {
-      CacheHelper.saveData(
-          key: 'soldiersInVacation', value: 0);
-      CacheHelper.saveData(
-          key: 'capSoldiersInVacation', value: 0);
+      CacheHelper.saveData(key: 'soldiersInVacation', value: 0);
+      CacheHelper.saveData(key: 'capSoldiersInVacation', value: 0);
     }
-
 
     emit(TamamLoading());
 
@@ -569,18 +570,18 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-  Future<String> saveImage(File imageFile) async {
+  Future<String> saveImage(File imageFile, String name) async {
     try {
       final ImagesPath = await getImagesFolder();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'image_$timestamp.jpg';
+      // final timestamp = DateTime.now().millisecondsSinceEpoch;
+      // final fileName = 'image_$timestamp.jpg';
 
       final imagesDir = Directory(ImagesPath);
       if (!await imagesDir.exists()) {
         await imagesDir.create(recursive: true);
       }
 
-      final savedImage = await imageFile.copy('${imagesDir.path}/$fileName');
+      final savedImage = await imageFile.copy('${imagesDir.path}/$name');
       return savedImage.path;
     } catch (e) {
       throw Exception('Failed to save image: $e');
@@ -602,7 +603,7 @@ class AppCubit extends Cubit<AppStates> {
       if (value != null) {
         image = value.files.first.path;
         imageFileName = value.files.first.name;
-        savedImagePath = await saveImage(File(image));
+        savedImagePath = await saveImage(File(image), imageFileName);
         imageController.text = imageFileName;
         emit(pickImageSuccess());
       } else {
@@ -973,9 +974,7 @@ class AppCubit extends Cubit<AppStates> {
       ''');
       VacData = vacations.map((e) => VacationModel.fromJson(e)).toList();
 
-
       for (var vacation in VacData) {
-
         calculateDifference(
             soldierId: vacation.soldierId, toDate: vacation.toDate);
         if (difference >= 0) {
@@ -1255,9 +1254,8 @@ class AppCubit extends Cubit<AppStates> {
   }
 
   Future<void> updateSoldier(
-      {
-        id,
-        name,
+      {id,
+      name,
       rank,
       phone,
       addPhone,
@@ -1280,9 +1278,8 @@ class AppCubit extends Cubit<AppStates> {
       skills,
       function,
       joinDate,
-        soldierIdImage,
-        soldierNationalIdImage
-      }) async {
+      soldierIdImage,
+      soldierNationalIdImage}) async {
     emit(updateSoldierLoading());
 
     final dbPath = await getSoldiersDatabaseFile();
@@ -1444,6 +1441,7 @@ class AppCubit extends Cubit<AppStates> {
   }
 
   var soldierIdImage;
+  var soldierIdImageName;
   var savedSoldierIdImagePath;
 
   Future<void> pickSoldierIdImage() async {
@@ -1456,8 +1454,9 @@ class AppCubit extends Cubit<AppStates> {
         .then((value) async {
       if (value != null) {
         soldierIdImage = value.files.first.path;
-        savedSoldierIdImagePath = await saveImage(File(soldierIdImage));
-        soldierIdImageController.text = savedSoldierIdImagePath;
+        soldierIdImageName = value.files.first.name;
+        savedSoldierIdImagePath = await saveImage(File(soldierIdImage), soldierIdImageName);
+        soldierIdImageController.text = soldierIdImageName;
         emit(pickSoldierIdImageSuccess());
       } else {
         emit(pickSoldierIdImageError());
@@ -1469,6 +1468,7 @@ class AppCubit extends Cubit<AppStates> {
   }
 
   var soldierNationalIdImage;
+  var soldierNationalIdImageName;
   var savedSoldierNationalIdImagePath;
 
   Future<void> pickSoldierNationalIdImage() async {
@@ -1481,9 +1481,10 @@ class AppCubit extends Cubit<AppStates> {
         .then((value) async {
       if (value != null) {
         soldierNationalIdImage = value.files.first.path;
+        soldierNationalIdImageName = value.files.first.name;
         savedSoldierNationalIdImagePath =
-            await saveImage(File(soldierNationalIdImage));
-        soldierNationalIdImageController.text = savedSoldierNationalIdImagePath;
+            await saveImage(File(soldierNationalIdImage), soldierNationalIdImageName);
+        soldierNationalIdImageController.text = soldierNationalIdImageName;
         emit(pickSoldierNationalIdImageSuccess());
       } else {
         emit(pickSoldierNationalIdImageError());
@@ -1494,7 +1495,8 @@ class AppCubit extends Cubit<AppStates> {
     });
   }
 
-  Future<void> updateSoldierImage({required soldierId, required imagePath})async{
+  Future<void> updateSoldierImage(
+      {required soldierId, required imagePath}) async {
     emit(updateSoldierImageLoading());
     final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
@@ -1515,6 +1517,127 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
+  Future<void> addMissions(
+      {required soldierId,
+      required soldierName,
+      required soldierFunction1,
+      required soldierFunction2}) async {
 
+    emit(addMissionLoadingState());
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      db.execute('''
+        CREATE TABLE IF NOT EXISTS missions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          soldierId TEXT NOT NULL,
+          soldierName TEXT NOT NULL,
+          soldierFunction1 TEXT NOT NULL,
+          soldierFunction2 TEXT NOT NULL,
+          date TEXT NOT NULL
+        )
+      ''');
+    } catch (e) {
+      emit(addMissionErrorState());
+      print(e);
+    }
+
+    try {
+      db.execute('''
+        INSERT INTO missions (soldierId, soldierName, soldierFunction1, soldierFunction2, date)
+        VALUES (?, ?, ?, ?, ?)
+      ''', [soldierId, soldierName, soldierFunction1, soldierFunction2, currentDate]);
+      emit(addMissionSuccessState());
+    } catch (e) {
+      emit(addMissionErrorState());
+      print(e);
+    } finally {
+      db.dispose();
+    }
+  }
+
+
+  List<Map<dynamic, dynamic>> missions = [];
+  Future<void> getMissions() async {
+    emit(getMissionsLoadingState());
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      final mission = db.select('''
+        SELECT * FROM missions
+      ''');
+      missions = mission.map((e) => e).toList();
+      emit(getMissionsSuccessState());
+    } catch (e) {
+      emit(getMissionsErrorState());
+      print(e);
+    } finally {
+      db.dispose();
+    }
+  }
+
+
+ MissionModel? soldierMissions;
+
+  Future<void> getMissionsById ({required soldierId}) async {
+    emit(getMissionsByIdLoadingState());
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      final mission = db.select('''
+        SELECT * FROM missions WHERE soldierId = ? AND date = ?
+      ''', [soldierId, currentDate]);
+      soldierMissions = MissionModel.fromJson(mission.first);
+      emit(getMissionsByIdSuccessState());
+    } catch (e) {
+      emit(getMissionsByIdErrorState());
+      print(e);
+    } finally {
+      db.dispose();
+    }
+  }
+
+  Future<void> getTodayMissions ({required date}) async {
+    emit(getTodayMissionsLoadingState());
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      final mission = db.select('''
+        SELECT * FROM missions WHERE date = ?
+      ''', [date]);
+      missions = mission.map((e) => e).toList();
+      emit(getTodayMissionsSuccessState());
+    } catch (e) {
+      emit(getTodayMissionsErrorState());
+      print(e);
+    } finally {
+      db.dispose();
+    }
+  }
+
+  Future<void> dropMissionTable()async{
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      db.execute('''
+        DROP TABLE missions
+      ''');
+      print('Table dropped');
+    } catch (e) {
+      print(e);
+    } finally {
+      db.dispose();
+    }
+  }
 
 }

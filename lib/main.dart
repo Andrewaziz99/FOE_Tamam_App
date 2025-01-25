@@ -28,8 +28,6 @@ void main() async {
 
 class MyApp extends StatelessWidget {
 
-  // final Widget startWidget;
-
   const MyApp({super.key});
 
 @override

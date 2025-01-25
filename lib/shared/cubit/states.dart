@@ -180,3 +180,27 @@ class updateSoldierImageLoading extends AppStates {}
 class updateSoldierImageSuccess extends AppStates {}
 
 class updateSoldierImageError extends AppStates {}
+
+class addMissionLoadingState extends AppStates {}
+
+class addMissionSuccessState extends AppStates {}
+
+class addMissionErrorState extends AppStates {}
+
+class getMissionsLoadingState extends AppStates {}
+
+class getMissionsSuccessState extends AppStates {}
+
+class getMissionsErrorState extends AppStates {}
+
+class getMissionsByIdLoadingState extends AppStates {}
+
+class getMissionsByIdSuccessState extends AppStates {}
+
+class getMissionsByIdErrorState extends AppStates {}
+
+class getTodayMissionsLoadingState extends AppStates {}
+
+class getTodayMissionsSuccessState extends AppStates {}
+
+class getTodayMissionsErrorState extends AppStates {}

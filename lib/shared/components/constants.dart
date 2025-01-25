@@ -136,8 +136,9 @@ const String DOC_TAMAM = 'تمام';
 
 const String tamamSuccess = 'تم طباعة التمام بنجاح';
 const String tamamError = 'حدث خطأ أثناء طباعة التمام';
-
+const String updateImageSuccess = 'تم تحديث الصورة بنجاح';
 const String missions = 'المهام اليومية للجنود';
+const String missionsConstant = 'المهام اليومية للجنود';
 const String printMissions = 'طباعة المهام اليومية للجنود';
 const String printMissionSuccess = 'تم طباعة المهام اليومية للجنود بنجاح';
 const String printMissionError = 'خطأ في طباعة المهام اليومية للجنود';
@@ -157,6 +158,7 @@ const String meeting_hole = 'قاعة المؤتمرات';
 const String elevator = 'الأسانسير';
 const String gym = 'الجيم';
 const String adminstration = 'شئون إدارية المكتب';
+const String development = 'تطوير';
 
 const String currentFunction = 'الوظيفة الحالية:';
 const String soldier = 'جندى';
@@ -245,6 +247,7 @@ const List<String> functions = [
   gym,
   coffee_corner,
   adminstration,
+  development
 ];
 
 const List<String> ranks = [

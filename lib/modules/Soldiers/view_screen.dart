@@ -84,7 +84,32 @@ class ViewScreen extends StatelessWidget {
               editSoldierNationalIdImageController.text = cubit.soldierModel!.soldierNationalIdImage!;
             }
 
+            if (state is updateSoldierImageSuccess) {
+              editImageController.clear();
+              cubit.getAllSoldiers();
+              CherryToast.success(
+                animationType: AnimationType.fromTop,
+                enableIconAnimation: true,
+                animationCurve: Curves.easeInOutQuint,
+                displayIcon: true,
+                toastDuration: const Duration(seconds: 5),
+                displayCloseButton: true,
+                autoDismiss: true,
+                toastPosition: Position.top,
+                title: const Text(updateImageSuccess),
+              ).show(context);
+            }
+
+            if (state is updateSoldierImageLoading) {
+              editImageController.clear();
+              cubit.savedImagePath = '';
+              cubit.imageFileName = '';
+            }
+
             if (state is enterNewSoldierError) {
+              cubit.savedImagePath = '';
+              cubit.savedSoldierIdImagePath = '';
+              cubit.savedSoldierNationalIdImagePath = '';
               CherryToast.error(
                 animationType: AnimationType.fromTop,
                 enableIconAnimation: true,
@@ -101,6 +126,8 @@ class ViewScreen extends StatelessWidget {
             if (state is enterNewSoldierSuccess) {
               cubit.getAllSoldiers();
               cubit.savedImagePath = '';
+              cubit.savedSoldierIdImagePath = '';
+              cubit.savedSoldierNationalIdImagePath = '';
               imageController.clear();
               nameController.clear();
               rankController.clear();
@@ -140,6 +167,7 @@ class ViewScreen extends StatelessWidget {
             }
 
             if (state is pickImageSuccess) {
+              editImageController.text = cubit.imageFileName;
               CherryToast.success(
                 animationType: AnimationType.fromTop,
                 enableIconAnimation: true,
@@ -168,6 +196,9 @@ class ViewScreen extends StatelessWidget {
             }
 
             if (state is updateSoldierSuccess){
+              cubit.savedImagePath = '';
+              cubit.savedSoldierIdImagePath = '';
+              cubit.savedSoldierNationalIdImagePath = '';
               cubit.getAllSoldiers();
               CherryToast.success(
                 animationType: AnimationType.fromTop,
@@ -183,7 +214,7 @@ class ViewScreen extends StatelessWidget {
             }
 
             if (state is pickSoldierIdImageSuccess) {
-              editSoldierIdImageController.text = cubit.savedSoldierIdImagePath;
+              editSoldierIdImageController.text = cubit.soldierIdImageName;
               CherryToast.success(
                 animationType: AnimationType.fromTop,
                 enableIconAnimation: true,
@@ -198,7 +229,7 @@ class ViewScreen extends StatelessWidget {
             }
 
             if (state is pickSoldierNationalIdImageSuccess) {
-              editSoldierNationalIdImageController.text = cubit.savedSoldierNationalIdImagePath;
+              editSoldierNationalIdImageController.text = cubit.soldierNationalIdImageName;
               CherryToast.success(
                 animationType: AnimationType.fromTop,
                 enableIconAnimation: true,
@@ -737,7 +768,7 @@ class ViewScreen extends StatelessWidget {
                                                           image: cubit.soldierModel != null &&
                                                               cubit.soldierModel!.soldierNationalIdImage != null &&
                                                               cubit.soldierModel!.soldierNationalIdImage!.isNotEmpty
-                                                              ? FileImage(File(cubit.soldierModel!.soldierNationalIdImage!))
+                                                              ? FileImage(File('$imagesPath\\${cubit.soldierModel!.soldierNationalIdImage!}'))
                                                               : const AssetImage('assets/images/unknown_image.png') as ImageProvider,
                                                           errorBuilder: OctoError.icon(color: Colors.red),
                                                           fit: BoxFit.cover,
@@ -746,7 +777,7 @@ class ViewScreen extends StatelessWidget {
                                                           defaultButton(
                                                               function: () {
                                                                 cubit.pickSoldierNationalIdImage();
-                                                                editSoldierNationalIdImageController.text = cubit.savedSoldierNationalIdImagePath;
+                                                                editSoldierNationalIdImageController.text = cubit.soldierNationalIdImageName;
 
                                                               },
                                                               background: Colors.blue,
@@ -787,7 +818,7 @@ class ViewScreen extends StatelessWidget {
                                                           image: cubit.soldierModel != null &&
                                                               cubit.soldierModel!.soldierIdImage != null &&
                                                               cubit.soldierModel!.soldierIdImage!.isNotEmpty
-                                                              ? FileImage(File(cubit.soldierModel!.soldierIdImage!))
+                                                              ? FileImage(File('$imagesPath\\${cubit.soldierModel!.soldierIdImage!}'))
                                                               : const AssetImage('assets/images/unknown_image.png') as ImageProvider,
                                                           errorBuilder: OctoError.icon(color: Colors.red),
                                                           fit: BoxFit.cover,
@@ -796,7 +827,7 @@ class ViewScreen extends StatelessWidget {
                                                           defaultButton(
                                                               function: () {
                                                                 cubit.pickSoldierIdImage();
-                                                                editSoldierIdImageController.text = cubit.savedSoldierIdImagePath;
+                                                                editSoldierIdImageController.text = cubit.soldierIdImageName;
 
                                                               },
                                                               background: Colors.blue,
@@ -888,7 +919,7 @@ class ViewScreen extends StatelessWidget {
                                                       addPhone: editAddPhoneController.text,
                                                       birthDate: editBirthDateController.text,
                                                       city: editCityController.text,
-                                                      image: cubit.savedImagePath ?? editImageController.text,
+                                                      image: editImageController.text,
                                                       nationalID: editNationalIDController.text,
                                                       soldierID: editSoldierIDController.text,
                                                       retiringDate: editRetiringDateController.text,
