@@ -204,3 +204,5 @@ class getTodayMissionsLoadingState extends AppStates {}
 class getTodayMissionsSuccessState extends AppStates {}
 
 class getTodayMissionsErrorState extends AppStates {}
+
+class changeIsAdminState extends AppStates {}

@@ -48,16 +48,10 @@ class LoginCubit extends Cubit<LoginStates> {
     return dbPath;
   }
 
-
-  // String getDatabasePath() {
-  //   final dbFolder = Directory('${Directory.current.path}/db');
-  //   if (!dbFolder.existsSync()) {
-  //     dbFolder.createSync();
-  //   }
-  //   return '${dbFolder.path}/app_database.db';
-  // }
-
-  Future<void> register(String username, String password)async {
+  Future<void> register({
+    required String username,
+    required String password,
+    required isAdmin})async {
     emit(RegisterLoadingState());
 
 
@@ -84,7 +78,7 @@ class LoginCubit extends Cubit<LoginStates> {
     try {
       db.execute('''
     INSERT INTO users (username, password, is_admin)
-    VALUES ('$username', '$hashedPass', 0)
+    VALUES ('$username', '$hashedPass', $isAdmin)
   ''');
       emit(RegisterSuccessState());
     } catch (e) {

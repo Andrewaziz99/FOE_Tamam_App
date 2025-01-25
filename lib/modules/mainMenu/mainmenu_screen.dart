@@ -20,14 +20,21 @@ class MainMenuScreen extends StatelessWidget {
   final isAdmin;
   final userName;
 
-  MainMenuScreen({super.key, userName, isAdmin}) : isAdmin = isAdmin, userName = userName;
+  MainMenuScreen({super.key, userName, isAdmin})
+      : isAdmin = isAdmin,
+        userName = userName;
 
   final TextEditingController oldPassController = TextEditingController();
   final TextEditingController newPassController = TextEditingController();
   final TextEditingController confirmNewPassController =
       TextEditingController();
 
+  final TextEditingController userNameController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController isAdminController = TextEditingController(text: '0');
+
   final _formKey = GlobalKey<FormState>();
+  final _registerFormKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +62,6 @@ class MainMenuScreen extends StatelessWidget {
               toastPosition: Position.top,
               title: const Text(passwordCheckError),
             ).show(context);
-
           }
 
           if (loginCubit.state is changePasswordSuccessState) {
@@ -74,7 +80,6 @@ class MainMenuScreen extends StatelessWidget {
               toastPosition: Position.top,
               title: const Text(passwordChangedSuccess),
             ).show(context);
-
           }
 
           if (state is pickImageSuccess) {
@@ -215,7 +220,6 @@ class MainMenuScreen extends StatelessWidget {
                           context: context,
                           builder: (context) {
                             return AlertDialog(
-                              
                               icon: const Icon(
                                 Icons.password,
                                 color: Colors.black,
@@ -248,7 +252,7 @@ class MainMenuScreen extends StatelessWidget {
                                             validate: (val) {
                                               if (val!.isEmpty) {
                                                 return passwordError;
-                                              }  else {
+                                              } else {
                                                 return null;
                                               }
                                             }),
@@ -267,7 +271,7 @@ class MainMenuScreen extends StatelessWidget {
                                             validate: (val) {
                                               if (val!.isEmpty) {
                                                 return passwordError;
-                                              }  else {
+                                              } else {
                                                 return null;
                                               }
                                             }),
@@ -275,13 +279,21 @@ class MainMenuScreen extends StatelessWidget {
                                           height: 20.0,
                                         ),
                                         defaultFormField(
-                                          onSubmit: (val){
-                                            var loginCubit = LoginCubit.get(context);
-                                            if (_formKey.currentState!.validate()) {
-                                              loginCubit.changePassword(context: context, username: userName, oldPassword: oldPassController.text, newPassword: newPassController.text);
-                                              Navigator.pop(context);
-                                            }
-                                          },
+                                            onSubmit: (val) {
+                                              var loginCubit =
+                                                  LoginCubit.get(context);
+                                              if (_formKey.currentState!
+                                                  .validate()) {
+                                                loginCubit.changePassword(
+                                                    context: context,
+                                                    username: userName,
+                                                    oldPassword:
+                                                        oldPassController.text,
+                                                    newPassword:
+                                                        newPassController.text);
+                                                Navigator.pop(context);
+                                              }
+                                            },
                                             isPassword: true,
                                             radius: BorderRadius.circular(20.0),
                                             textDirection: TextDirection.rtl,
@@ -292,14 +304,183 @@ class MainMenuScreen extends StatelessWidget {
                                             labelColor: Colors.black,
                                             textColor: Colors.black,
                                             validate: (val) {
-                                              if (val != newPassController.text) {
+                                              if (val !=
+                                                  newPassController.text) {
                                                 return passwordsNotMatched;
-                                              }else if(val!.isEmpty){
+                                              } else if (val!.isEmpty) {
                                                 return passwordError;
                                               } else {
                                                 return null;
                                               }
                                             }),
+                                        const SizedBox(
+                                          height: 50.0,
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) {
+                                                return Form(
+                                                  key: _registerFormKey,
+                                                  child: AlertDialog(
+                                                    backgroundColor:
+                                                        Colors.white70,
+                                                    title:
+                                                        const Text(createAccount),
+                                                    content: Directionality(
+                                                      textDirection:
+                                                          TextDirection.rtl,
+                                                      child: Column(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          defaultFormField(
+                                                              radius: BorderRadius
+                                                                  .circular(20.0),
+                                                              prefix:
+                                                                  Icons.person,
+                                                              textDirection:
+                                                                  TextDirection
+                                                                      .rtl,
+                                                              labelColor:
+                                                                  Colors.black,
+                                                              textColor:
+                                                                  Colors.black,
+                                                              controller:
+                                                                  userNameController,
+                                                              type: TextInputType
+                                                                  .text,
+                                                              label: username,
+                                                              validate: (val) {
+                                                                if (val!
+                                                                    .isEmpty) {
+                                                                  return usernameError;
+                                                                } else {
+                                                                  return null;
+                                                                }
+                                                              }),
+                                                          const SizedBox(
+                                                            height: 20.0,
+                                                          ),
+                                                          defaultFormField(
+                                                              isPassword: true,
+                                                              radius: BorderRadius
+                                                                  .circular(20.0),
+                                                              prefix: Icons
+                                                                  .password_rounded,
+                                                              textDirection:
+                                                                  TextDirection
+                                                                      .rtl,
+                                                              labelColor:
+                                                                  Colors.black,
+                                                              textColor:
+                                                                  Colors.black,
+                                                              controller:
+                                                                  passwordController,
+                                                              type: TextInputType
+                                                                  .text,
+                                                              label: password,
+                                                              validate: (val) {
+                                                                if (val!
+                                                                    .isEmpty) {
+                                                                  return passwordError;
+                                                                } else {
+                                                                  return null;
+                                                                }
+                                                              }),
+                                                          const SizedBox(
+                                                            height: 20.0,
+                                                          ),
+                                                          defaultFormField(
+                                                              radius: BorderRadius
+                                                                  .circular(20.0),
+                                                              prefix: Icons
+                                                                  .add_moderator_rounded,
+                                                              textDirection:
+                                                                  TextDirection
+                                                                      .rtl,
+                                                              labelColor:
+                                                                  Colors.black,
+                                                              textColor:
+                                                                  Colors.redAccent,
+                                                              controller:
+                                                                  isAdminController,
+                                                              type: TextInputType
+                                                                  .text,
+                                                              label: admin,
+                                                              validate: (val) {
+                                                                if (val!
+                                                                    .isEmpty) {
+                                                                  return adminError;
+                                                                } else {
+                                                                  return null;
+                                                                }
+                                                              }),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    actions: [
+                                                      defaultButton(
+                                                          function: () {
+                                                            Navigator.pop(
+                                                                context);
+                                                          },
+                                                          text: back,
+                                                          radius: 25.0,
+                                                          width: 450.0,
+                                                          fSize: 25.0,
+                                                          tColor: Colors.white,
+                                                          background:
+                                                              Colors.black),
+                                                      const SizedBox(
+                                                        width: 20.0,
+                                                      ),
+                                                      defaultButton(
+                                                          function: () {
+                                                            var loginCubit =
+                                                                LoginCubit.get(
+                                                                    context);
+
+                                                              if (_registerFormKey.currentState!.validate()) {
+                                                                loginCubit.register(
+                                                                    username:
+                                                                        userNameController
+                                                                            .text,
+                                                                    password:
+                                                                        passwordController
+                                                                            .text,
+                                                                    isAdmin: int.parse(
+                                                                        isAdminController
+                                                                            .text));
+                                                              }
+                                                          },
+                                                          text: register,
+                                                          radius: 25.0,
+                                                          width: 450.0,
+                                                          fSize: 25.0,
+                                                          tColor: Colors.white,
+                                                          background:
+                                                              Colors.green),
+                                                    ],
+                                                    actionsAlignment:
+                                                        MainAxisAlignment.center,
+                                                  ),
+                                                );
+                                              },
+                                            );
+                                          },
+                                          child: const Text(
+                                            createAccount,
+                                            style: TextStyle(
+                                              fontSize: 20.0,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                            ),
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -316,12 +497,19 @@ class MainMenuScreen extends StatelessWidget {
                                     fSize: 25.0,
                                     tColor: Colors.white,
                                     background: Colors.black),
-                                const SizedBox(width: 20.0,),
+                                const SizedBox(
+                                  width: 20.0,
+                                ),
                                 defaultButton(
                                     function: () {
                                       var loginCubit = LoginCubit.get(context);
                                       if (_formKey.currentState!.validate()) {
-                                        loginCubit.changePassword(context: context, username: userName, oldPassword: oldPassController.text, newPassword: newPassController.text);
+                                        loginCubit.changePassword(
+                                            context: context,
+                                            username: userName,
+                                            oldPassword: oldPassController.text,
+                                            newPassword:
+                                                newPassController.text);
                                         Navigator.pop(context);
                                       }
                                     },

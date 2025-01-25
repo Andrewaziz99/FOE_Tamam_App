@@ -34,6 +34,8 @@ const String register = "تسجيل";
 const String add = 'إضافة';
 const String edit = 'تعديل';
 const String delete = 'حذف';
+const String createAccount = 'إنشاء حساب جديد';
+const String admin = 'الصلاحية';
 
 const String welcome = "مرحباً";
 
@@ -45,6 +47,8 @@ const String passwordError = "الرجاء إدخال كلمة المرور";
 
 const String usernameCheckError = "اسم المستخدم غير موجود";
 const String passwordCheckError = "كلمة المرور غير صحيحة";
+
+const String adminError = "الرجاء إدخال الصلاحية";
 
 const String newUserBtn = 'إدخال وثيقة تعارف جديدة';
 const String showUserBtn = 'إدخال وإظهار وثائق التعارف';
