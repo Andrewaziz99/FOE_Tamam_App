@@ -93,23 +93,23 @@ class printMissionsSuccessState extends AppStates {}
 class printMissionsErrorState extends AppStates {}
 
 
-class extendVacationLoadingState extends AppStates {}
+// class extendVacationLoadingState extends AppStates {}
+//
+// class extendVacationSuccessState extends AppStates {}
+//
+// class extendVacationErrorState extends AppStates {}
+//
+// class StopVacationLoadingState extends AppStates {}
+//
+// class StopVacationSuccessState extends AppStates {}
+//
+// class StopVacationErrorState extends AppStates {}
 
-class extendVacationSuccessState extends AppStates {}
-
-class extendVacationErrorState extends AppStates {}
-
-class StopVacationLoadingState extends AppStates {}
-
-class StopVacationSuccessState extends AppStates {}
-
-class StopVacationErrorState extends AppStates {}
-
-class getExtendedVacationLoadingState extends AppStates {}
-
-class getExtendedVacationSuccessState extends AppStates {}
-
-class getExtendedVacationErrorState extends AppStates {}
+// class getExtendedVacationLoadingState extends AppStates {}
+//
+// class getExtendedVacationSuccessState extends AppStates {}
+//
+// class getExtendedVacationErrorState extends AppStates {}
 
 class updateVacationLoadingState extends AppStates {}
 
@@ -145,11 +145,11 @@ class triggerCheckBoxState extends AppStates {}
 
 class UpdateCheckedListState extends AppStates {}
 
-class deleteVacationLoadingState extends AppStates {}
-
-class deleteVacationSuccessState extends AppStates {}
-
-class deleteVacationErrorState extends AppStates {}
+// class deleteVacationLoadingState extends AppStates {}
+//
+// class deleteVacationSuccessState extends AppStates {}
+//
+// class deleteVacationErrorState extends AppStates {}
 
 class calculateDifferenceLoadingState extends AppStates {}
 
@@ -206,3 +206,9 @@ class getTodayMissionsSuccessState extends AppStates {}
 class getTodayMissionsErrorState extends AppStates {}
 
 class changeIsAdminState extends AppStates {}
+
+class updateIsExtendedLoading extends AppStates {}
+
+class updateIsExtendedSuccess extends AppStates {}
+
+class updateIsExtendedError extends AppStates {}

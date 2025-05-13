@@ -3,6 +3,8 @@ import 'package:cherry_toast/resources/arrays.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tamam/modules/Missions/missions_screen.dart';
+import 'package:tamam/modules/Officers/officers_screen.dart';
+import 'package:tamam/modules/Soldiers/new_screen.dart';
 import 'package:tamam/modules/Soldiers/new_soldier_screen.dart';
 import 'package:tamam/modules/Soldiers/view_screen.dart';
 import 'package:tamam/modules/Vacation/moves_screen.dart';
@@ -650,6 +652,16 @@ class MainMenuScreen extends StatelessWidget {
                                 fSize: 20.0,
                                 radius: 20.0,
                                 width: 250.0,
+                                text: officersVacation,
+                                function: () {
+                                  navigateTo(context, OfficersScreen());
+                                },
+                              ),
+                              const SizedBox(width: 30.0),
+                              defaultButton(
+                                fSize: 20.0,
+                                radius: 20.0,
+                                width: 250.0,
                                 text: missions,
                                 function: () {
                                   navigateTo(context, MissionsScreen());
@@ -730,6 +742,17 @@ class MainMenuScreen extends StatelessWidget {
                                   await CacheHelper.getData(key: 'VAC');
 
                                   cubit.createTamamDoc();
+                                },
+                              ),
+                              const SizedBox(width: 30),
+                              defaultButton(
+                                fSize: 18.0,
+                                radius: 20.0,
+                                width: 250.0,
+                                text: newUserBtn,
+                                function: () {
+                                  // navigateTo(context, ViewSoldiersScreen());
+                                  navigateTo(context, NewScreen());
                                 },
                               ),
                             ],

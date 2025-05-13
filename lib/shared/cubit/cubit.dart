@@ -141,13 +141,15 @@ class AppCubit extends Cubit<AppStates> {
   List<Map<dynamic, dynamic>> soldiers = [];
 
   void AddToList(
-      index, soldierID, name, fromDate, toDate, feedBack, rank, isSaved) {
+      index, soldierID, name, fromDate, toDate, feedBack, rank, location, lastVac,   isSaved) {
     soldiers.add({
       'soldierID': soldierID,
       'name': name,
       'rank': rank,
+      'location': location,
       'fromDate': fromDate,
       'toDate': toDate,
+      'lastVac': lastVac,
       'feedback': feedBack,
       'num': index,
       'isSaved': isSaved,
@@ -155,7 +157,7 @@ class AppCubit extends Cubit<AppStates> {
     emit(addToListSuccess());
   }
 
-  void updateList(index, soldierID, name, fromDate, toDate, feedBack, rank) {
+  void updateList(index, soldierID, name, fromDate, toDate, feedBack, rank, location, lastVac) {
     emit(updateListLoading());
     soldiers[index] = {
       'soldierID': soldierID,
@@ -165,6 +167,8 @@ class AppCubit extends Cubit<AppStates> {
       'toDate': toDate,
       'feedback': feedBack,
       'num': index,
+      'location': location,
+      'lastVac': lastVac,
     };
     emit(updateListSuccess());
   }
@@ -193,6 +197,10 @@ class AppCubit extends Cubit<AppStates> {
 
       final logoFileContent =
           await File('$appDir\\images\\logo.png').readAsBytes();
+
+      final signatureFileContent =
+      await File('$appDir\\images\\signature1.png').readAsBytes();
+
       final dayDate =
           convertToArabic(DateFormat('yyyy-MM-dd').format(DateTime.now()));
 
@@ -215,6 +223,8 @@ class AppCubit extends Cubit<AppStates> {
           ..add(TextContent("fromDate", data['fromDate']))
           ..add(TextContent("toDate", data['toDate']))
           ..add(TextContent("level", data['rank']))
+          ..add(TextContent("location", data['location']))
+          ..add(TextContent("lastVac", data['lastVac']))
           ..add(TextContent("feedback", data['feedback']))
           ..add(TextContent("num", convertToArabic((i + 1).toString())));
 
@@ -225,6 +235,7 @@ class AppCubit extends Cubit<AppStates> {
       Content content = Content();
       content
         ..add(ImageContent("logo", logoFileContent))
+        ..add(ImageContent("signature", signatureFileContent))
         ..add(TextContent("id", convertToArabic(id.toString())))
         ..add(TextContent("year", currentYear))
         ..add(TextContent("dept_Name", office))
@@ -258,96 +269,96 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-  Future<void> createExtendDoc(List<VacationModel> dataList) async {
-    try {
-      // Locate and read the test template
-      final appDir = await getTemplatesFolder();
-      final extendsFile = File('$appDir\\extends.docx');
-
-      if (!await extendsFile.exists()) {
-        throw Exception("extends file not found: ${extendsFile.path}");
-      }
-
-      final extendsBytes = await extendsFile.readAsBytes();
-      final extendsDoc = await DocxTemplate.fromBytes(extendsBytes);
-
-      // Create a list of rows for the table content
-      List<RowContent> allRows = [];
-
-      var id = await CacheHelper.getData(key: 'id') ?? 1;
-
-      final currentYear =
-          convertToArabic(DateFormat('yyyy').format(DateTime.now()));
-
-      final logoFileContent =
-          await File('$appDir\\images\\logo.png').readAsBytes();
-      final dayDate =
-          convertToArabic(DateFormat('yyyy-MM-dd').format(DateTime.now()));
-
-      final currentDate =
-          convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
-
-      final today = DateTime.now();
-      final weekday =
-          getWeekDay(DateFormat('EEEE').format(today).toLowerCase());
-
-      for (int i = 0; i < dataList.length; i++) {
-        extendVacation(
-            soldierID: dataList[i].soldierId,
-            fromDate: dataList[i].fromDate,
-            toDate: dataList[i].toDate,
-            extend: 1);
-
-        final data = dataList[i];
-
-        // Create a row for the current data
-        final row = RowContent()
-          ..add(TextContent("name", data.name))
-          ..add(TextContent("fromDate", data.fromDate))
-          ..add(TextContent("toDate", data.toDate))
-          ..add(TextContent("level", data.rank))
-          ..add(TextContent("feedback", data.feedback))
-          ..add(TextContent("num", convertToArabic((i + 1).toString())));
-
-        // Add the row to our collection
-        allRows.add(row);
-      }
-      // Populate placeholders
-      Content content = Content();
-      content
-        ..add(ImageContent("logo", logoFileContent))
-        ..add(TextContent("id", convertToArabic(id.toString())))
-        ..add(TextContent("year", currentYear))
-        ..add(TextContent("dept_Name", office))
-        ..add(TextContent("currentDate", currentDate))
-        ..add(TextContent("doc_Typ", DOC_EXT))
-        ..add(TextContent("day", weekday))
-        ..add(TextContent("date", currentDate))
-        ..add(TextContent("space", '\n'))
-        ..add(TableContent('table', allRows));
-
-      // Generate the document for the current item
-      final generatedDoc = await extendsDoc.generate(content);
-
-      if (generatedDoc != null) {
-        final extendsDoc = File('$appDir\\output\\$DOC_EXT $dayDate.docx');
-        await extendsDoc.writeAsBytes(generatedDoc, flush: true);
-
-        print("Document generated successfully at: ${extendsDoc.path}");
-
-        await CacheHelper.saveData(key: 'id', value: id + 1);
-
-        emit(genTableSuccess());
-
-        final result = await OpenFilex.open(extendsDoc.path);
-        print('Open file result: ${result.type}');
-      } else {
-        throw Exception("Failed to generate document");
-      }
-    } catch (e) {
-      print("Error: $e");
-    }
-  }
+  // Future<void> createExtendDoc(List<VacationModel> dataList) async {
+  //   try {
+  //     // Locate and read the test template
+  //     final appDir = await getTemplatesFolder();
+  //     final extendsFile = File('$appDir\\extends.docx');
+  //
+  //     if (!await extendsFile.exists()) {
+  //       throw Exception("extends file not found: ${extendsFile.path}");
+  //     }
+  //
+  //     final extendsBytes = await extendsFile.readAsBytes();
+  //     final extendsDoc = await DocxTemplate.fromBytes(extendsBytes);
+  //
+  //     // Create a list of rows for the table content
+  //     List<RowContent> allRows = [];
+  //
+  //     var id = await CacheHelper.getData(key: 'id') ?? 1;
+  //
+  //     final currentYear =
+  //         convertToArabic(DateFormat('yyyy').format(DateTime.now()));
+  //
+  //     final logoFileContent =
+  //         await File('$appDir\\images\\logo.png').readAsBytes();
+  //     final dayDate =
+  //         convertToArabic(DateFormat('yyyy-MM-dd').format(DateTime.now()));
+  //
+  //     final currentDate =
+  //         convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
+  //
+  //     final today = DateTime.now();
+  //     final weekday =
+  //         getWeekDay(DateFormat('EEEE').format(today).toLowerCase());
+  //
+  //     for (int i = 0; i < dataList.length; i++) {
+  //       extendVacation(
+  //           soldierID: dataList[i].soldierId,
+  //           fromDate: dataList[i].fromDate,
+  //           toDate: dataList[i].toDate,
+  //           extend: 1);
+  //
+  //       final data = dataList[i];
+  //
+  //       // Create a row for the current data
+  //       final row = RowContent()
+  //         ..add(TextContent("name", data.name))
+  //         ..add(TextContent("fromDate", data.fromDate))
+  //         ..add(TextContent("toDate", data.toDate))
+  //         ..add(TextContent("level", data.rank))
+  //         ..add(TextContent("feedback", data.feedback))
+  //         ..add(TextContent("num", convertToArabic((i + 1).toString())));
+  //
+  //       // Add the row to our collection
+  //       allRows.add(row);
+  //     }
+  //     // Populate placeholders
+  //     Content content = Content();
+  //     content
+  //       ..add(ImageContent("logo", logoFileContent))
+  //       ..add(TextContent("id", convertToArabic(id.toString())))
+  //       ..add(TextContent("year", currentYear))
+  //       ..add(TextContent("dept_Name", office))
+  //       ..add(TextContent("currentDate", currentDate))
+  //       ..add(TextContent("doc_Typ", DOC_EXT))
+  //       ..add(TextContent("day", weekday))
+  //       ..add(TextContent("date", currentDate))
+  //       ..add(TextContent("space", '\n'))
+  //       ..add(TableContent('table', allRows));
+  //
+  //     // Generate the document for the current item
+  //     final generatedDoc = await extendsDoc.generate(content);
+  //
+  //     if (generatedDoc != null) {
+  //       final extendsDoc = File('$appDir\\output\\$DOC_EXT $dayDate.docx');
+  //       await extendsDoc.writeAsBytes(generatedDoc, flush: true);
+  //
+  //       print("Document generated successfully at: ${extendsDoc.path}");
+  //
+  //       await CacheHelper.saveData(key: 'id', value: id + 1);
+  //
+  //       emit(genTableSuccess());
+  //
+  //       final result = await OpenFilex.open(extendsDoc.path);
+  //       print('Open file result: ${result.type}');
+  //     } else {
+  //       throw Exception("Failed to generate document");
+  //     }
+  //   } catch (e) {
+  //     print("Error: $e");
+  //   }
+  // }
 
   Future<void> createVACDocFromList(
       List<Map<dynamic, dynamic>> dataList) async {
@@ -419,15 +430,6 @@ class AppCubit extends Cubit<AppStates> {
     }
 
     emit(TamamLoading());
-
-    for (int index = 0; index < VacData.length; index++) {
-      calculateDifference(
-          soldierId: VacData[index].soldierId, toDate: VacData[index].toDate);
-
-      if (difference < 0 || difference > 0) {
-        // removeSoldierFromList(index);
-      }
-    }
 
     final tId = await CacheHelper.getData(key: 'T_id') ?? 1;
 
@@ -893,6 +895,26 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
+  Future<void> updateIsExtended(soldierID, value) async {
+    emit(updateIsExtendedLoading());
+
+    final dbPath = await getSoldiersDatabaseFile();
+    final db = sqlite3.open(dbPath);
+
+    try {
+      db.execute('''
+        UPDATE vacations
+        SET isExtended = $value
+        WHERE soldierId = "$soldierID"
+      ''');
+      // db.dispose();
+      emit(updateIsExtendedSuccess());
+    } catch (e) {
+      emit(updateIsExtendedError());
+      print(e);
+    }
+  }
+
   Future<void> updateIsOUT(soldierID) async {
     emit(updateSoldierLoading());
 
@@ -917,6 +939,8 @@ class AppCubit extends Cubit<AppStates> {
       {required soldierID,
       required fromDate,
       required toDate,
+      required city,
+      required lastVac,
       required feedback,
       required rank,
       required name}) async {
@@ -934,6 +958,8 @@ class AppCubit extends Cubit<AppStates> {
           rank TEXT NOT NULL,
           fromDate TEXT NOT NULL,
           toDate TEXT NOT NULL,
+          city TEXT,
+          lastVac TEXT,
           feedback TEXT NOT NULL,
           isExtended INTEGER NOT NULL,
           isActive INTEGER NOT NULL    
@@ -946,12 +972,11 @@ class AppCubit extends Cubit<AppStates> {
 
     try {
       db.execute(
-          ''' INSERT INTO vacations (soldierId, name, rank, fromDate, toDate, feedback, isExtended, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ''',
-          [soldierID, name, rank, fromDate, toDate, feedback, 0, 1]);
-
-      updateInVAC(soldierID, 1);
+          ''' INSERT INTO vacations (soldierId, name, rank, fromDate, toDate, city, lastVac, feedback, isExtended, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ''',
+          [soldierID, name, rank, fromDate, toDate, city, lastVac, feedback, 0, 1]);
 
       emit(makeVacationSuccess());
+      updateInVAC(soldierID, 1);
     } catch (e) {
       emit(makeVacationError());
       print(e);
@@ -973,20 +998,6 @@ class AppCubit extends Cubit<AppStates> {
         SELECT * FROM vacations
       ''');
       VacData = vacations.map((e) => VacationModel.fromJson(e)).toList();
-
-      for (var vacation in VacData) {
-        calculateDifference(
-            soldierId: vacation.soldierId, toDate: vacation.toDate);
-        if (difference >= 0) {
-          updateActiveVacationFor(soldierId: vacation.soldierId, isActive: 0);
-          updateInVAC(vacation.soldierId, 0);
-        }
-
-        if (vacation.toDate! == currentDate) {
-          updateActiveVacationFor(soldierId: vacation.soldierId, isActive: 0);
-          updateInVAC(vacation.soldierId, 0);
-        }
-      }
 
       emit(getVacationsSuccess());
     } catch (e) {
@@ -1077,26 +1088,26 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-  Future<void> getExtendedVacations() async {
-    emit(getExtendedVacationLoadingState());
-
-    final dbPath = await getSoldiersDatabaseFile();
-    final db = sqlite3.open(dbPath);
-
-    try {
-      final vacations = db.select('''
-        SELECT * FROM vacations WHERE isExtended = 1
-      ''');
-      VacData = vacations.map((e) => VacationModel.fromJson(e)).toList();
-
-      emit(getExtendedVacationSuccessState());
-    } catch (e) {
-      emit(getExtendedVacationErrorState());
-      print(e);
-    } finally {
-      db.dispose();
-    }
-  }
+  // Future<void> getExtendedVacations() async {
+  //   emit(getExtendedVacationLoadingState());
+  //
+  //   final dbPath = await getSoldiersDatabaseFile();
+  //   final db = sqlite3.open(dbPath);
+  //
+  //   try {
+  //     final vacations = db.select('''
+  //       SELECT * FROM vacations WHERE isExtended = 1
+  //     ''');
+  //     VacData = vacations.map((e) => VacationModel.fromJson(e)).toList();
+  //
+  //     emit(getExtendedVacationSuccessState());
+  //   } catch (e) {
+  //     emit(getExtendedVacationErrorState());
+  //     print(e);
+  //   } finally {
+  //     db.dispose();
+  //   }
+  // }
 
   List<VacationModel> activeVacationData = [];
 
@@ -1129,19 +1140,24 @@ class AppCubit extends Cubit<AppStates> {
         CacheHelper.saveData(
             key: 'capSoldiersInVacation', value: capSoldiersInVacation);
 
-        calculateDifference(
-            soldierId: vacation.soldierId, toDate: vacation.toDate);
-        print(difference);
+        // if (currentDate == vacation.toDate) {
+        //   updateActiveVacationFor(soldierId: vacation.soldierId, isActive: 0);
+        //   updateInVAC(vacation.soldierId, 0);
+        // }
 
-        if (difference >= 0) {
+        final DateTime today = DateTime.now();
+        DateTime vacationDate = DateFormat('yyyy/MM/dd')
+            .parse(convertArabicToEnglish(vacation.toDate!));
+
+        // check if vacation is before now
+        if (today.isAfter(vacationDate)) {
           updateActiveVacationFor(soldierId: vacation.soldierId, isActive: 0);
           updateInVAC(vacation.soldierId, 0);
+          updateIsExtended(vacation.soldierId, 0);
         }
 
-        if (vacation.toDate! == currentDate) {
-          updateActiveVacationFor(soldierId: vacation.soldierId, isActive: 0);
-          updateInVAC(vacation.soldierId, 0);
-        }
+
+
       }
       emit(getActiveVacationsSuccessState());
     } catch (e) {
@@ -1181,77 +1197,77 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-  Future<void> extendVacation({
-    required soldierID,
-    required fromDate,
-    required toDate,
-    required extend,
-  }) async {
-    emit(extendVacationLoadingState());
+  // Future<void> extendVacation({
+  //   required soldierID,
+  //   required fromDate,
+  //   required toDate,
+  //   required extend,
+  // }) async {
+  //   emit(extendVacationLoadingState());
+  //
+  //   final dbPath = await getSoldiersDatabaseFile();
+  //   final db = sqlite3.open(dbPath);
+  //
+  //   toDate = convertArabicToEnglish(toDate);
+  //   extend = convertArabicToEnglish(extend);
+  //
+  //   DateFormat toDateFormat = DateFormat("yyyy/MM/dd");
+  //   DateTime toDateDT = toDateFormat.parse(toDate);
+  //
+  //   final extendedDate = toDateDT.add(Duration(days: int.parse(extend)));
+  //
+  //   final extendedDateArabic =
+  //       convertToArabic(DateFormat("yyyy/MM/dd").format(extendedDate));
+  //
+  //   try {
+  //     final arabicToDate = convertToArabic(toDate);
+  //
+  //     db.execute('''
+  //       UPDATE vacations
+  //       SET toDate = '$extendedDateArabic', isExtended = 1
+  //       WHERE soldierId = '$soldierID' AND toDate = '$arabicToDate' AND isActive = 1
+  //     ''');
+  //
+  //     db.dispose();
+  //
+  //     emit(extendVacationSuccessState());
+  //   } catch (e) {
+  //     emit(extendVacationErrorState());
+  //     print('Error extending vacation: $e');
+  //   }
+  // }
 
-    final dbPath = await getSoldiersDatabaseFile();
-    final db = sqlite3.open(dbPath);
-
-    toDate = convertArabicToEnglish(toDate);
-    extend = convertArabicToEnglish(extend);
-
-    DateFormat toDateFormat = DateFormat("yyyy/MM/dd");
-    DateTime toDateDT = toDateFormat.parse(toDate);
-
-    final extendedDate = toDateDT.add(Duration(days: int.parse(extend)));
-
-    final extendedDateArabic =
-        convertToArabic(DateFormat("yyyy/MM/dd").format(extendedDate));
-
-    try {
-      final arabicToDate = convertToArabic(toDate);
-
-      db.execute('''
-        UPDATE vacations
-        SET toDate = '$extendedDateArabic', isExtended = 1
-        WHERE soldierId = '$soldierID' AND toDate = '$arabicToDate' AND isActive = 1
-      ''');
-
-      db.dispose();
-
-      emit(extendVacationSuccessState());
-    } catch (e) {
-      emit(extendVacationErrorState());
-      print('Error extending vacation: $e');
-    }
-  }
-
-  Future<void> stopVacation(
-      {required soldierID, required fromDate, required toDate}) async {
-    emit(StopVacationLoadingState());
-
-    final dbPath = await getSoldiersDatabaseFile();
-    final db = sqlite3.open(dbPath);
-
-    final currentDate =
-        convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
-    updateActiveVacationFor(soldierId: soldierID, isActive: 0);
-    updateInVAC(soldierID, 0);
-
-    try {
-      db.execute('''
-        UPDATE vacations
-        SET toDate = ?, isExtended = 0
-        WHERE soldierId = '$soldierID' AND isActive = 1 AND fromDate = '$fromDate' AND toDate = '$toDate'
-      ''', [currentDate]);
-
-      emit(StopVacationSuccessState());
-
-      getAllSoldiers();
-      getActiveVacations();
-      getVacations();
-    } catch (e) {
-      emit(StopVacationErrorState());
-      print(e);
-    } finally {
-      db.dispose();
-    }
-  }
+  // Future<void> stopVacation(
+  //     {required soldierID, required fromDate, required toDate}) async {
+  //   emit(StopVacationLoadingState());
+  //
+  //   final dbPath = await getSoldiersDatabaseFile();
+  //   final db = sqlite3.open(dbPath);
+  //
+  //   final currentDate =
+  //       convertToArabic(DateFormat('yyyy/MM/dd').format(DateTime.now()));
+  //   updateActiveVacationFor(soldierId: soldierID, isActive: 0);
+  //   updateInVAC(soldierID, 0);
+  //
+  //   try {
+  //     db.execute('''
+  //       UPDATE vacations
+  //       SET toDate = ?, isExtended = 0
+  //       WHERE soldierId = '$soldierID' AND isActive = 1 AND fromDate = '$fromDate' AND toDate = '$toDate'
+  //     ''', [currentDate]);
+  //
+  //     emit(StopVacationSuccessState());
+  //
+  //     getAllSoldiers();
+  //     getActiveVacations();
+  //     getVacations();
+  //   } catch (e) {
+  //     emit(StopVacationErrorState());
+  //     print(e);
+  //   } finally {
+  //     db.dispose();
+  //   }
+  // }
 
   Future<void> updateSoldier(
       {id,
@@ -1361,27 +1377,26 @@ class AppCubit extends Cubit<AppStates> {
     }
   }
 
-  Future<void> deleteVacation(soldierId, fromDate, toDate) async {
-    emit(deleteVacationLoadingState());
-
-    final dbPath = await getSoldiersDatabaseFile();
-    final db = sqlite3.open(dbPath);
-
-    try {
-      db.execute('''
-      DELETE FROM vacations WHERE soldierId = ? AND fromDate = ? AND toDate = ?
-    ''', [soldierId, fromDate, toDate]);
-      emit(deleteVacationSuccessState());
-      updateInVAC(soldierId, 0);
-      updateActiveVacationFor(soldierId: soldierId, isActive: 0);
-      getVacations();
-    } catch (e) {
-      emit(deleteVacationErrorState());
-      print(e);
-    } finally {
-      db.dispose();
-    }
-  }
+  // Future<void> deleteVacation(soldierId, fromDate, toDate) async {
+  //   emit(deleteVacationLoadingState());
+  //
+  //   final dbPath = await getSoldiersDatabaseFile();
+  //   final db = sqlite3.open(dbPath);
+  //
+  //   try {
+  //     db.execute('''
+  //     DELETE FROM vacations WHERE soldierId = ? AND fromDate = ? AND toDate = ?
+  //   ''', [soldierId, fromDate, toDate]);
+  //     emit(deleteVacationSuccessState());
+  //     updateInVAC(soldierId, 0);
+  //     getVacations();
+  //   } catch (e) {
+  //     emit(deleteVacationErrorState());
+  //     print(e);
+  //   } finally {
+  //     db.dispose();
+  //   }
+  // }
 
   List<Map<dynamic, dynamic>> missionsData = [];
 

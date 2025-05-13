@@ -56,6 +56,8 @@ class VacationScreen extends StatelessWidget {
                   cubit.activeVacationData[index].toDate,
                   cubit.activeVacationData[index].feedback,
                   cubit.activeVacationData[index].rank,
+                  cubit.activeVacationData[index].city,
+                  cubit.activeVacationData[index].lastVac,
                   true);
 
               editFromDateController.text =
@@ -348,6 +350,10 @@ class VacationScreen extends StatelessWidget {
                         fSize: 20.0,
                         radius: 20.0,
                         function: () {
+                          final today = DateTime.now();
+                          final diff = int.parse((convertArabicToEnglish(differenceController.text)));
+                          // Calculate the last vacation date and format the date like yyyy/MM//dd
+                          final lastVac = DateFormat('yyyy/MM/dd').format(today.subtract(Duration(days: diff)));
                           cubit.AddToList(
                               count,
                               soldierData['soldierId'],
@@ -356,6 +362,8 @@ class VacationScreen extends StatelessWidget {
                               toDateController.text,
                               feedBackController.text,
                               soldierData['soldierRank'],
+                              soldierData['soldierCity'],
+                              convertToArabic(lastVac),
                               false);
                           count++;
                           cubit.updateCheckedList();
@@ -564,14 +572,21 @@ class VacationScreen extends StatelessWidget {
                                                                   defaultButton(
                                                                       function:
                                                                           () {
-                                                                        cubit.updateList(
+                                                                            final today = DateTime.now();
+                                                                            final diff = int.parse((convertArabicToEnglish(differenceController.text)));
+                                                                            // Calculate the last vacation date and format the date like yyyy/MM//dd
+                                                                            final lastVac = DateFormat('yyyy/MM/dd').format(today.subtract(Duration(days: diff)));
+                                                                            cubit.updateList(
                                                                             index,
                                                                             cubit.soldiers[index]['soldierId'],
                                                                             cubit.soldiers[index]['name'],
                                                                             editFromDateController.text,
                                                                             editToDateController.text,
                                                                             editFeedBackController.text,
-                                                                            cubit.soldiers[index]['rank']);
+                                                                            cubit.soldiers[index]['rank'],
+                                                                          cubit.soldiers[index]['soldierCity'],
+                                                                                convertToArabic(lastVac)
+                                                                        );
                                                                       },
                                                                       text:
                                                                           edit,
@@ -694,14 +709,17 @@ class VacationScreen extends StatelessWidget {
                                     i < cubit.soldiers.length;
                                     i++) {
                                   if (cubit.soldiers[i]['isSaved'] == false) {
-                                    cubit.makeVacation(
+                                    cubit.makeVacation (
                                         soldierID: cubit.soldiers[i]
                                             ['soldierID'],
                                         fromDate: cubit.soldiers[i]['fromDate'],
                                         toDate: cubit.soldiers[i]['toDate'],
                                         feedback: cubit.soldiers[i]['feedback'],
                                         rank: cubit.soldiers[i]['rank'],
-                                        name: cubit.soldiers[i]['name']);
+                                        name: cubit.soldiers[i]['name'],
+                                        city: cubit.soldiers[i]['location'],
+                                        lastVac: cubit.soldiers[i]['lastVac'],
+                                    );
                                   }
                                 }
                               },

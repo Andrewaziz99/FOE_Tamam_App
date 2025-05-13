@@ -6,9 +6,11 @@ class VacationModel {
   String? fromDate;
   String? toDate;
   String? feedback;
+  String? city;
+  String? lastVac;
 
   VacationModel(this.Id, this.soldierId, this.name, this.rank, this.fromDate,
-      this.toDate, this.feedback);
+      this.toDate, this.feedback, this.city, this.lastVac);
 
   VacationModel.fromJson(Map<dynamic, dynamic> json) {
     Id = json['Id'];
@@ -18,6 +20,8 @@ class VacationModel {
     fromDate = json['fromDate'];
     toDate = json['toDate'];
     feedback = json['feedback'];
+    city = json['city'];
+    lastVac = json['lastVac'];
   }
 
   Map<String, dynamic> toJson() {
@@ -29,6 +33,8 @@ class VacationModel {
       'fromDate': fromDate,
       'toDate': toDate,
       'feedback': feedback,
+      'city': city,
+      'lastVac': lastVac
     };
   }
 }

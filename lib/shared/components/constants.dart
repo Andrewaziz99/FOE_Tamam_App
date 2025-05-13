@@ -59,6 +59,7 @@ const String enter_editBtn = 'إدخال / تعديل البيانات';
 const String printBtn1 = 'طباعة تمام اليوم';
 const String printBtn2 = 'طباعة تحركات اليوم';
 const String printBtn3 = 'طباعة تصاريح الاجازات';
+const String registerAndPrint = 'تسجيل وطباعة';
 
 const String name = 'الاسم';
 const String rank = 'الرتبة';
@@ -134,8 +135,10 @@ const String vacationAddSuccess = 'تم تسجيل الاجازة بنجاح';
 const String feedback = 'ملاحظات';
 const String office = 'مكتب السيد/ مدير الجهاز';
 const String DOC_TYP = 'تحركات';
+const String OFFICERS_DOC_TYP = 'تحركات الضباط';
 const String DOC_EXT = 'امتداد';
 const String DOC_VAC = 'اجازات';
+const String OFFICER_DOC_VAC = 'تصاريح الضباط';
 const String DOC_TAMAM = 'تمام';
 
 const String tamamSuccess = 'تم طباعة التمام بنجاح';
@@ -222,7 +225,7 @@ const String confirmDelete = 'تأكيد الحذف';
 // const String deleteSoldierSuccess = 'تم حذف الجندى بنجاح';
 const String selectImage = 'اختر صورة';
 
-
+const String extendVacationSuccessMsg = 'تم تمديد الاجازة بنجاح';
 
 const String settings = 'الإعدادات';
 
@@ -234,6 +237,9 @@ const String confirmNewPass = 'تأكيد كلمة المرور الجديدة';
 
 const passwordsNotMatched = 'كلمة المرور غير متطابقة';
 const String passwordChangedSuccess = 'تم تغيير كلمة المرور بنجاح';
+
+const String officersVacation = 'تسجيل إجازات الضباط';
+const String registerVacation = 'تسجيل إجازة';
 
 const List<String> functions = [
   VIPReecption,

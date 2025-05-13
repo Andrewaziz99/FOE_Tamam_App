@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:tamam/shared/components/constants.dart';
@@ -85,6 +87,8 @@ Widget defaultFormField({
   Function()? onTap,
   Color labelColor = Colors.white60,
   Color textColor = Colors.white,
+  Color suffixColor = Colors.black,
+  Color prefixColor = Colors.black,
   double labelSize = 20,
   double textSize = 20,
   bool isPassword = false,
@@ -118,11 +122,11 @@ Widget defaultFormField({
         labelStyle: TextStyle(
           color: labelColor,
         ),
-        prefixIcon: Icon(prefix),
+        prefixIcon: Icon(prefix, color: prefixColor,),
         suffixIcon: suffix != null
             ? IconButton(
                 onPressed: suffixPressed,
-                icon: Icon(suffix),
+                icon: Icon(suffix, color: suffixColor,),
               )
             : null,
         border: OutlineInputBorder(borderRadius: radius),
@@ -620,3 +624,78 @@ buildSettingItem({
 //         ],
 //       ),
 //     ));
+
+
+class CustomDropDownMenu extends StatelessWidget {
+  const CustomDropDownMenu({
+    super.key,
+    required this.controller,
+    required this.screenWidth,
+    required this.screenRatio,
+    required this.entries,
+    required this.onSelected,
+    this.title = '',
+    this.showTitle = true,
+    this.textColor = Colors.black,
+    this.titleColor = Colors.black,
+    this.textSize = 20,
+    this.titleSize = 20,
+    this.space = 10,
+  });
+
+  final String title;
+  final Color textColor;
+  final Color titleColor;
+  final double textSize;
+  final double titleSize;
+  final TextEditingController controller;
+  final double screenWidth;
+  final double screenRatio;
+  final List<DropdownMenuEntry> entries;
+  final bool showTitle;
+
+  // ignore: prefer_typing_uninitialized_variables
+  final onSelected;
+  final double space;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 10),
+        if (showTitle)
+          Container(
+              margin: const EdgeInsets.all(5),
+              child: Text(title,
+                  style: TextStyle(fontSize: titleSize, color: titleColor))),
+        SizedBox(
+          height: space,
+        ),
+        SizedBox(
+          width: max(screenWidth * screenRatio, 300),
+          child: Container(
+            margin: const EdgeInsets.all(5),
+            child: Align(
+              alignment: Alignment.center,
+              child: DropdownMenu(
+                textStyle: TextStyle(
+                    fontSize: textSize, fontFamily: "Cairo", color: textColor),
+                requestFocusOnTap: true,
+                controller: controller,
+                menuHeight: 200,
+                enableFilter: true,
+                onSelected: onSelected,
+                width: screenWidth * screenRatio - 2 * 10,
+                dropdownMenuEntries: entries,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(
+          height: 5,
+        )
+      ],
+    );
+  }
+}

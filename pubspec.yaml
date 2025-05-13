@@ -76,6 +76,8 @@ dependencies:
   open_filex: ^4.6.0
   crypto: ^3.0.6
   octo_image: ^2.1.0
+  blurrycontainer: ^2.1.0
+
 
 dev_dependencies:
   flutter_test:
