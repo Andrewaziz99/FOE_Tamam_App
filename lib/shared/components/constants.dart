@@ -567,3 +567,5 @@ Future<String> getTemplatesFolder() async {
   final imagesFolder = await CacheHelper.getData(key: 'templates_folder');
   return imagesFolder;
 }
+
+String msg = '';

@@ -162,24 +162,14 @@ class OfficersScreen extends StatelessWidget {
                                 //Print all and Register Button
                                 defaultButton(
                                     function: () {
-                                      final data = [
-                                        {
-                                        'name': cubit.officersList.first.officerName,
-                                        'rank': cubit.officersList.first.officerRank,
-                                        'location': cubit.officersList.first.officerCity,
-                                        'job': cubit.officersList.first.officerJob,
+                                      final data = cubit.officersList.map((officer) => {
+                                        'name': officer.officerName,
+                                        'rank': officer.officerRank,
+                                        'location': officer.officerCity,
+                                        'job': officer.officerJob,
                                         'startDate': startDateController.text,
                                         'endDate': endDateController.text,
-                                      },
-                                        {
-                                          'name': cubit.officersList.last.officerName,
-                                          'rank': cubit.officersList.last.officerRank,
-                                          'location': cubit.officersList.last.officerCity,
-                                          'job': cubit.officersList.last.officerJob,
-                                          'startDate': startDateController.text,
-                                          'endDate': endDateController.text,
-                                        }
-                                      ];
+                                      }).toList();
                                       cubit.registerOfficerVacation(data, startDateController.text, endDateController.text).then((value) {
                                       cubit.printMovements(data);
                                       cubit.printVacationPasses(data);

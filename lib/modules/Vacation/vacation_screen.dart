@@ -18,6 +18,8 @@ class VacationScreen extends StatelessWidget {
   final TextEditingController fromDateController = TextEditingController();
   final TextEditingController toDateController = TextEditingController();
   final TextEditingController feedBackController = TextEditingController();
+  final TextEditingController cityController = TextEditingController();
+  final TextEditingController lastVacationController = TextEditingController();
 
   final TextEditingController editFromDateController = TextEditingController();
   final TextEditingController editToDateController = TextEditingController();

@@ -7,6 +7,7 @@ import 'package:sqlite3/open.dart';
 import 'package:tamam/modules/login/login_screen.dart';
 import 'package:tamam/shared/bloc_observer.dart';
 import 'package:tamam/modules/login/cubit/cubit.dart';
+import 'package:tamam/shared/components/constants.dart';
 import 'package:tamam/shared/network/local/cache_helper.dart';
 
 import 'shared/styles/themes.dart';
@@ -17,9 +18,14 @@ void main() async {
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
 
-  open.overrideFor(OperatingSystem.windows, () {
-    return DynamicLibrary.open('lib/sqlite3.dll');
-    });
+  try {
+    open.overrideFor(OperatingSystem.windows, () {
+      return DynamicLibrary.open('lib/sqlite3.dll');
+      });
+    // msg = 'SQLite3 library loaded successfully';
+  } on Exception catch (e) {
+    msg = e.toString();
+  }
   Bloc.observer = MyBlocObserver();
   await CacheHelper.init();
 

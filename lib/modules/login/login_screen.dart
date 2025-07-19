@@ -92,6 +92,7 @@ class LoginScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
+                                  Text(msg),
                                   defaultFormField(
                                       radius: BorderRadius.circular(15.0),
                                       controller: userNameController,
