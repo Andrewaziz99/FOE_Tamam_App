@@ -25,6 +25,15 @@ class MissionsScreen extends StatelessWidget {
         child: BlocConsumer<AppCubit, AppStates>(
           listener: (BuildContext context, state) {
             var cubit = AppCubit.get(context);
+            
+            if (state is deleteMissionSuccessState) {
+              cubit.getSoldiersNotInVAC();
+              cubit.getMissions();
+              cubit.missions.clear();
+              cubit.missionsData.clear();
+            }
+            
+            
             if (state is addMissionSuccessState) {
               funcController1.clear();
               funcController2.clear();
@@ -41,8 +50,6 @@ class MissionsScreen extends StatelessWidget {
                 title: const Text(setFunctionSucess),
               ).show(context);
             } else if (state is addMissionErrorState) {
-              funcController1.clear();
-              funcController2.clear();
               CherryToast.error(
                 textDirection: TextDirection.rtl,
                 animationType: AnimationType.fromTop,
@@ -59,7 +66,8 @@ class MissionsScreen extends StatelessWidget {
 
             if (state is printMissionsSuccessState) {
               cubit.getMissions();
-
+              cubit.missionsData.clear();
+              cubit.missions.clear();
               CherryToast.success(
                 textDirection: TextDirection.rtl,
                 animationType: AnimationType.fromTop,
@@ -97,11 +105,18 @@ class MissionsScreen extends StatelessWidget {
                 centerTitle: true,
                 actions: [
                   IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.black),
+                    onPressed: () {
+                      cubit.dropMissionTable();
+                    },
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.logout, color: Colors.red),
                     onPressed: () {
                       logOut(context);
                     },
                   ),
+
                 ],
               ),
               body: Stack(

@@ -212,3 +212,9 @@ class updateIsExtendedLoading extends AppStates {}
 class updateIsExtendedSuccess extends AppStates {}
 
 class updateIsExtendedError extends AppStates {}
+
+class deleteMissionLoadingState extends AppStates {}
+
+class deleteMissionSuccessState extends AppStates {}
+
+class deleteMissionErrorState extends AppStates {}

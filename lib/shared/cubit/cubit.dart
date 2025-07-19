@@ -1709,6 +1709,7 @@ class AppCubit extends Cubit<AppStates> {
   }
 
   Future<void> dropMissionTable() async {
+    emit(deleteMissionLoadingState());
     final dbPath = await getSoldiersDatabaseFile();
     final db = sqlite3.open(dbPath);
 
@@ -1717,8 +1718,10 @@ class AppCubit extends Cubit<AppStates> {
         DROP TABLE missions
       ''');
       print('Table dropped');
+      emit(deleteMissionSuccessState());
     } catch (e) {
       print(e);
+      emit(deleteMissionErrorState());
     } finally {
       db.dispose();
     }
